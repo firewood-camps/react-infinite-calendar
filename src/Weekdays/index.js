@@ -1,32 +1,37 @@
-import React, {PureComponent} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
-import {scrollbarSize} from '../utils';
+import { scrollbarSize } from '../utils';
 import styles from './Weekdays.scss';
 
-export default class Weekdays extends PureComponent {
-  static propTypes = {
-    locale: PropTypes.object,
-    theme: PropTypes.object,
-  };
+const Weekdays = ({ weekdays, weekStartsOn, theme }) => {
+  const orderedWeekdays = [...weekdays.slice(weekStartsOn, 7), ...weekdays.slice(0, weekStartsOn)];
 
-  render() {
-    const {weekdays, weekStartsOn, theme} = this.props;
-    const orderedWeekdays = [...weekdays.slice(weekStartsOn, 7), ...weekdays.slice(0, weekStartsOn)];
+  return (
+    <ul
+      className={styles.root}
+      style={{
+        backgroundColor: theme.weekdayColor,
+        color: theme.textColor.active,
+        paddingRight: scrollbarSize,
+      }}
+      aria-hidden={true}
+    >
+      {orderedWeekdays.map((val, index) => (
+        <li key={`Weekday-${index}`} className={styles.day}>{val}</li>
+      ))}
+    </ul>
+  );
+};
 
-    return (
-      <ul
-        className={styles.root}
-        style={{
-          backgroundColor: theme.weekdayColor,
-          color: theme.textColor.active,
-          paddingRight: scrollbarSize,
-        }}
-        aria-hidden={true}
-      >
-        {orderedWeekdays.map((val, index) => (
-          <li key={`Weekday-${index}`} className={styles.day}>{val}</li>
-        ))}
-      </ul>
-    );
-  }
-}
+Weekdays.propTypes = {
+  weekdays: PropTypes.arrayOf(PropTypes.string).isRequired,
+  weekStartsOn: PropTypes.number.isRequired,
+  theme: PropTypes.shape({
+    weekdayColor: PropTypes.string.isRequired,
+    textColor: PropTypes.shape({
+      active: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+};
+
+export default Weekdays;

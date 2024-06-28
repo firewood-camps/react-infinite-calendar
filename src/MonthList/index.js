@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import VirtualList from 'react-tiny-virtual-list';
 import classNames from 'classnames';
@@ -10,137 +10,111 @@ import {
   animate,
 } from '../utils';
 import parse from 'date-fns/parse';
-import startOfMonth from 'date-fns/start_of_month';
+import startOfMonth from 'date-fns/startOfMonth';
 import Month from '../Month';
 import styles from './MonthList.scss';
 
 const AVERAGE_ROWS_PER_MONTH = 5;
 
-export default class MonthList extends Component {
-  static propTypes = {
-    disabledDates: PropTypes.arrayOf(PropTypes.string),
-    disabledDays: PropTypes.arrayOf(PropTypes.number),
-    height: PropTypes.number,
-    isScrolling: PropTypes.bool,
-    locale: PropTypes.object,
-    maxDate: PropTypes.instanceOf(Date),
-    min: PropTypes.instanceOf(Date),
-    minDate: PropTypes.instanceOf(Date),
-    months: PropTypes.arrayOf(PropTypes.object),
-    onDaySelect: PropTypes.func,
-    onScroll: PropTypes.func,
-    overscanMonthCount: PropTypes.number,
-    rowHeight: PropTypes.number,
-    selectedDate: PropTypes.instanceOf(Date),
-    showOverlay: PropTypes.bool,
-    theme: PropTypes.object,
-    today: PropTypes.instanceOf(Date),
-    width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  };
-  state = {
-    scrollTop: this.getDateOffset(this.props.scrollDate),
-  };
-  cache = {};
-  memoize = function(param) {
-    if (!this.cache[param]) {
-      const {locale: {weekStartsOn}} = this.props;
+const MonthList = ({
+  disabledDates,
+  disabledDays,
+  height,
+  isScrolling,
+  locale,
+  maxDate,
+  min,
+  minDate,
+  months,
+  onDaySelect,
+  onScroll,
+  overscanMonthCount,
+  rowHeight,
+  scrollDate,
+  selectedDate,
+  showOverlay,
+  theme,
+  today,
+  width,
+}) => {
+  const [scrollTop, setScrollTop] = useState(getDateOffset(scrollDate));
+  const cache = useRef({});
+  const monthHeights = useRef([]);
+  const scrollEl = useRef(null);
+  const virtualListRef = useRef(null);
+
+  const memoize = useCallback((param) => {
+    if (!cache.current[param]) {
+      const { weekStartsOn } = locale;
       const [year, month] = param.split(':');
       const result = getMonth(year, month, weekStartsOn);
-      this.cache[param] = result;
+      cache.current[param] = result;
     }
-    return this.cache[param];
-  };
-  monthHeights = [];
+    return cache.current[param];
+  }, [locale]);
 
-  _getRef = (instance) => { this.VirtualList = instance; }
+  useEffect(() => {
+    scrollEl.current = virtualListRef.current.rootNode;
+  }, []);
 
-  getMonthHeight = (index) => {
-    if (!this.monthHeights[index]) {
-      let {locale: {weekStartsOn}, months, rowHeight} = this.props;
-      let {month, year} = months[index];
-      let weeks = getWeeksInMonth(month, year, weekStartsOn, index === months.length - 1);
-      let height = weeks * rowHeight;
-      this.monthHeights[index] = height;
-    }
+  useEffect(() => {
+    setScrollTop(getDateOffset(scrollDate));
+  }, [scrollDate]);
 
-    return this.monthHeights[index];
-  };
-
-  componentDidMount() {
-    this.scrollEl = this.VirtualList.rootNode;
-  }
-
-  componentWillReceiveProps({scrollDate}) {
-    if (scrollDate !== this.props.scrollDate) {
-      this.setState({
-        scrollTop: this.getDateOffset(scrollDate),
-      });
-    }
-  }
-
-  getDateOffset(date) {
-    const {min, rowHeight, locale: {weekStartsOn}, height} = this.props;
+  const getDateOffset = useCallback((date) => {
+    const { weekStartsOn } = locale;
     const weeks = getWeek(startOfMonth(min), parse(date), weekStartsOn);
+    return weeks * rowHeight - (height - rowHeight / 2) / 2;
+  }, [min, rowHeight, locale, height]);
 
-    return weeks * rowHeight - (height - rowHeight/2) / 2;
-  }
+  const scrollToDate = useCallback((date, offset = 0, ...rest) => {
+    const offsetTop = getDateOffset(date);
+    scrollTo(offsetTop + offset, ...rest);
+  }, [getDateOffset]);
 
-  scrollToDate = (date, offset = 0, ...rest) => {
-    let offsetTop = this.getDateOffset(date);
-    this.scrollTo(offsetTop + offset, ...rest);
-  };
-
-  scrollTo = (scrollTop = 0, shouldAnimate = false, onScrollEnd = emptyFn) => {
+  const scrollTo = useCallback((scrollTop = 0, shouldAnimate = false, onScrollEnd = emptyFn) => {
     const onComplete = () => setTimeout(() => {
-      this.scrollEl.style.overflowY = 'auto';
+      scrollEl.current.style.overflowY = 'auto';
       onScrollEnd();
     });
 
-    // Interrupt iOS Momentum scroll
-    this.scrollEl.style.overflowY = 'hidden';
+    scrollEl.current.style.overflowY = 'hidden';
 
     if (shouldAnimate) {
-      /* eslint-disable sort-keys */
       animate({
-        fromValue: this.scrollEl.scrollTop,
+        fromValue: scrollEl.current.scrollTop,
         toValue: scrollTop,
-        onUpdate: (scrollTop, callback) =>
-          this.setState({scrollTop}, callback),
+        onUpdate: (scrollTop, callback) => setScrollTop(scrollTop, callback),
         onComplete,
       });
     } else {
       window.requestAnimationFrame(() => {
-        this.scrollEl.scrollTop = scrollTop;
+        scrollEl.current.scrollTop = scrollTop;
         onComplete();
       });
     }
-  };
+  }, []);
 
-  renderMonth = ({index, style}) => {
-    let {
-      DayComponent,
-      disabledDates,
-      disabledDays,
-      locale,
-      maxDate,
-      minDate,
-      months,
-      passThrough,
-      rowHeight,
-      selected,
-      showOverlay,
-      theme,
-      today,
-    } = this.props;
+  const getMonthHeight = useCallback((index) => {
+    if (!monthHeights.current[index]) {
+      const { weekStartsOn } = locale;
+      const { month, year } = months[index];
+      const weeks = getWeeksInMonth(month, year, weekStartsOn, index === months.length - 1);
+      const height = weeks * rowHeight;
+      monthHeights.current[index] = height;
+    }
+    return monthHeights.current[index];
+  }, [locale, months, rowHeight]);
 
-    let {month, year} = months[index];
-    let key = `${year}:${month}`;
-    let {date, rows} = this.memoize(key);
+  const renderMonth = useCallback(({ index, style }) => {
+    const { month, year } = months[index];
+    const key = `${year}:${month}`;
+    const { date, rows } = memoize(key);
 
     return (
       <Month
         key={key}
-        selected={selected}
+        selected={selectedDate}
         DayComponent={DayComponent}
         monthDate={date}
         disabledDates={disabledDates}
@@ -159,35 +133,46 @@ export default class MonthList extends Component {
         {...passThrough.Month}
       />
     );
-  };
+  }, [memoize, months, selectedDate, disabledDates, disabledDays, maxDate, minDate, rowHeight, showOverlay, today, theme, locale, passThrough]);
 
-  render() {
-    let {
-      height,
-      isScrolling,
-      onScroll,
-      overscanMonthCount,
-      months,
-      rowHeight,
-      width,
-    } = this.props;
-    const {scrollTop} = this.state;
+  return (
+    <VirtualList
+      ref={virtualListRef}
+      width={width}
+      height={height}
+      itemCount={months.length}
+      itemSize={getMonthHeight}
+      estimatedItemSize={rowHeight * AVERAGE_ROWS_PER_MONTH}
+      renderItem={renderMonth}
+      onScroll={onScroll}
+      scrollOffset={scrollTop}
+      className={classNames(styles.root, { [styles.scrolling]: isScrolling })}
+      style={{ lineHeight: `${rowHeight}px` }}
+      overscanCount={overscanMonthCount}
+    />
+  );
+};
 
-    return (
-      <VirtualList
-        ref={this._getRef}
-        width={width}
-        height={height}
-        itemCount={months.length}
-        itemSize={this.getMonthHeight}
-        estimatedItemSize={rowHeight * AVERAGE_ROWS_PER_MONTH}
-        renderItem={this.renderMonth}
-        onScroll={onScroll}
-        scrollOffset={scrollTop}
-        className={classNames(styles.root, {[styles.scrolling]: isScrolling})}
-        style={{lineHeight: `${rowHeight}px`}}
-        overscanCount={overscanMonthCount}
-      />
-    );
-  }
-}
+MonthList.propTypes = {
+  disabledDates: PropTypes.arrayOf(PropTypes.string),
+  disabledDays: PropTypes.arrayOf(PropTypes.number),
+  height: PropTypes.number.isRequired,
+  isScrolling: PropTypes.bool,
+  locale: PropTypes.object.isRequired,
+  maxDate: PropTypes.instanceOf(Date),
+  min: PropTypes.instanceOf(Date).isRequired,
+  minDate: PropTypes.instanceOf(Date),
+  months: PropTypes.arrayOf(PropTypes.object).isRequired,
+  onDaySelect: PropTypes.func,
+  onScroll: PropTypes.func,
+  overscanMonthCount: PropTypes.number,
+  rowHeight: PropTypes.number.isRequired,
+  scrollDate: PropTypes.instanceOf(Date).isRequired,
+  selectedDate: PropTypes.instanceOf(Date),
+  showOverlay: PropTypes.bool,
+  theme: PropTypes.object.isRequired,
+  today: PropTypes.instanceOf(Date).isRequired,
+  width: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
+};
+
+export default MonthList;
