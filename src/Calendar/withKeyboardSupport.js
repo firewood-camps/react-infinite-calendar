@@ -1,66 +1,87 @@
-import {
-  compose,
-  withHandlers,
-  withProps,
-  withState,
-} from 'recompose';
-import addDays from 'date-fns/add_days';
+import React, { useState, useCallback, useMemo } from 'react';
+import addDays from 'date-fns/addDays';
 import format from 'date-fns/format';
-import isAfter from 'date-fns/is_after';
-import isBefore from 'date-fns/is_before';
-import {keyCodes, withImmutableProps} from '../utils';
+import isAfter from 'date-fns/isAfter';
+import isBefore from 'date-fns/isBefore';
+import { keyCodes, withImmutableProps } from '../utils';
 
-const enhanceDay = withProps(props => ({
-  isHighlighted: props.highlightedDate === props.date,
-}));
+const enhanceDay = (DayComponent) => (props) => {
+  const isHighlighted = props.highlightedDate === props.date;
+  return <DayComponent {...props} isHighlighted={isHighlighted} />;
+};
 
-export const withKeyboardSupport = compose(
-  withState('highlightedDate', 'setHighlight'),
-  withImmutableProps(({DayComponent}) => ({
-    DayComponent: enhanceDay(DayComponent),
-  })),
-  withHandlers({
-    onKeyDown: props => e => handleKeyDown(e, props),
-  }),
-  withProps(({highlightedDate, onKeyDown, onSelect, passThrough, setHighlight}) => ({
-    passThrough: {
-      ...passThrough,
+export const withKeyboardSupport = (Component) => {
+  return (props) => {
+    const { DayComponent, minDate, maxDate, selected, displayDate, passThrough: initialPassThrough } = props;
+    const [highlightedDate, setHighlight] = useState(selected || new Date());
+    const setScrollDate = useCallback((date) => {
+      // Implement scroll date logic here if needed
+    }, []);
+
+    const handleKeyDown = useCallback((e) => {
+      handleKeyDownInternal(e, {
+        minDate,
+        maxDate,
+        passThrough: { Day: { onClick: initialPassThrough.Day.onClick } },
+        setScrollDate,
+        setHighlight,
+        highlightedDate,
+        selected,
+        displayDate,
+      });
+    }, [highlightedDate, minDate, maxDate, initialPassThrough, setScrollDate, setHighlight, selected, displayDate]);
+
+    const enhancedDayComponent = useMemo(() => enhanceDay(DayComponent), [DayComponent]);
+
+    const formattedHighlightedDate = highlightedDate ? format(highlightedDate, 'yyyy-MM-dd') : null;
+
+    const passThrough = useMemo(() => ({
+      ...initialPassThrough,
       Day: {
-        ...passThrough.Day,
-        highlightedDate: format(highlightedDate, 'YYYY-MM-DD'),
+        ...initialPassThrough.Day,
+        highlightedDate: formattedHighlightedDate,
         onClick: (date) => {
           setHighlight(null);
-          passThrough.Day.onClick(date);
+          initialPassThrough.Day.onClick(date);
         },
       },
-      rootNode: {onKeyDown},
-    },
-  })),
-);
+      rootNode: { onKeyDown: handleKeyDown },
+    }), [initialPassThrough, formattedHighlightedDate, handleKeyDown]);
 
-function handleKeyDown(e, props) {
+    return (
+      <Component
+        {...props}
+        DayComponent={enhancedDayComponent}
+        highlightedDate={highlightedDate}
+        setHighlight={setHighlight}
+        passThrough={passThrough}
+      />
+    );
+  };
+};
+
+function handleKeyDownInternal(e, props) {
   const {
     minDate,
     maxDate,
-    passThrough: {Day: {onClick}},
+    passThrough: { Day: { onClick } },
     setScrollDate,
     setHighlight,
+    highlightedDate,
+    selected,
+    displayDate,
   } = props;
-  const highlightedDate = getInitialDate(props);
+
+  const initialDate = highlightedDate || selected.start || displayDate || selected || new Date();
   let delta = 0;
 
-  if (
-    [keyCodes.left, keyCodes.up, keyCodes.right, keyCodes.down].indexOf(
-      e.keyCode,
-    ) > -1 &&
-    typeof e.preventDefault === 'function'
-  ) {
+  if ([keyCodes.left, keyCodes.up, keyCodes.right, keyCodes.down].indexOf(e.keyCode) > -1 && typeof e.preventDefault === 'function') {
     e.preventDefault();
   }
 
   switch (e.keyCode) {
     case keyCodes.enter:
-      onClick && onClick(highlightedDate);
+      onClick && onClick(initialDate);
       return;
     case keyCodes.left:
       delta = -1;
@@ -79,7 +100,7 @@ function handleKeyDown(e, props) {
   }
 
   if (delta) {
-    let newHighlightedDate = addDays(highlightedDate, delta);
+    let newHighlightedDate = addDays(initialDate, delta);
 
     // Make sure the new highlighted date isn't before min / max
     if (isBefore(newHighlightedDate, minDate)) {
@@ -91,8 +112,4 @@ function handleKeyDown(e, props) {
     setScrollDate(newHighlightedDate);
     setHighlight(newHighlightedDate);
   }
-}
-
-function getInitialDate({highlightedDate, selected, displayDate}) {
-  return highlightedDate || selected.start || displayDate || selected || new Date();
 }

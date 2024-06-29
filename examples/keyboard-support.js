@@ -1,5 +1,5 @@
 import React from 'react';
-import {render} from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import InfiniteCalendar, {
   Calendar,
   withDateSelection,
@@ -7,7 +7,7 @@ import InfiniteCalendar, {
 } from 'react-infinite-calendar';
 import 'react-infinite-calendar/styles.css';
 
-render(
+const App = () => (
   <InfiniteCalendar
     /*
      * Here, we're enhancing our base Calendar component by wrapping it with the `withKeyboardSupport` HOC
@@ -16,6 +16,8 @@ render(
      * You could also use the `withKeyboardSupport` with the `withRange` and `withMultipleDates` HOCs
      */
     Component={withDateSelection(withKeyboardSupport(Calendar))}
-  />,
-  document.querySelector('#root')
+  />
 );
+
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);

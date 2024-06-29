@@ -1,12 +1,12 @@
-import React, {Component} from 'react';
+import React, { Component, createRef } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import {debounce, emptyFn, range, ScrollSpeed} from '../utils';
-import {defaultProps} from 'recompose';
+import { debounce, emptyFn, range, ScrollSpeed } from '../utils';
+import { defaultProps } from 'recompose';
 import defaultDisplayOptions from '../utils/defaultDisplayOptions';
 import defaultLocale from '../utils/defaultLocale';
 import defaultTheme from '../utils/defaultTheme';
-import Today, {DIRECTION_UP, DIRECTION_DOWN} from '../Today';
+import Today, { DIRECTION_UP, DIRECTION_DOWN } from '../Today';
 import Header from '../Header';
 import MonthList from '../MonthList';
 import Weekdays from '../Weekdays';
@@ -14,7 +14,7 @@ import Years from '../Years';
 import Day from '../Day';
 import parse from 'date-fns/parse';
 import format from 'date-fns/format';
-import startOfDay from 'date-fns/start_of_day';
+import startOfDay from 'date-fns/startOfDay';
 
 const styles = {
   container: require('./Container.scss'),
@@ -44,16 +44,22 @@ export const withDefaultProps = defaultProps({
   YearsComponent: Years,
 });
 
-export default class Calendar extends Component {
+class Calendar extends Component {
   constructor(props) {
-    super(...arguments);
-
+    super(props);
     this.updateYears(props);
-
     this.state = {
       display: props.display,
+      isScrolling: false,
+      showToday: false,
     };
+    this.scrollTop = 0;
+    this.node = createRef();
+    this._MonthList = createRef();
+    this._Years = createRef();
+    this.handleScrollEnd = debounce(this.handleScrollEnd.bind(this), 150);
   }
+
   static propTypes = {
     autoFocus: PropTypes.bool,
     className: PropTypes.string,
@@ -65,12 +71,12 @@ export default class Calendar extends Component {
       hideYearsOnSelect: PropTypes.bool,
       layout: PropTypes.oneOf(['portrait', 'landscape']),
       overscanMonthCount: PropTypes.number,
-  		shouldHeaderAnimate: PropTypes.bool,
+      shouldHeaderAnimate: PropTypes.bool,
       showHeader: PropTypes.bool,
       showMonthsForYears: PropTypes.bool,
-  		showOverlay: PropTypes.bool,
-  		showTodayHelper: PropTypes.bool,
-  		showWeekdays: PropTypes.bool,
+      showOverlay: PropTypes.bool,
+      showTodayHelper: PropTypes.bool,
+      showWeekdays: PropTypes.bool,
       todayHelperRowOffset: PropTypes.number,
     }),
     height: PropTypes.number,
@@ -112,24 +118,27 @@ export default class Calendar extends Component {
     width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     YearsComponent: PropTypes.func,
   };
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if (nextProps.display !== prevState.display) {
+      return { display: nextProps.display };
+    }
+    return null;
+  }
+
   componentDidMount() {
-    let {autoFocus} = this.props;
-
-    if (autoFocus) {
-      this.node.focus();
+    if (this.props.autoFocus && this.node.current) {
+      this.node.current.focus();
     }
   }
-  componentWillUpdate(nextProps, nextState) {
-    let {min, minDate, max, maxDate} = this.props;
 
-    if (nextProps.min !== min || nextProps.minDate !== minDate || nextProps.max !== max || nextProps.maxDate !== maxDate) {
-      this.updateYears(nextProps);
-    }
-
-    if (nextProps.display !== this.props.display) {
-      this.setState({display: nextProps.display});
+  componentDidUpdate(prevProps) {
+    const { min, minDate, max, maxDate } = this.props;
+    if (prevProps.min !== min || prevProps.minDate !== minDate || prevProps.max !== max || prevProps.maxDate !== maxDate) {
+      this.updateYears(this.props);
     }
   }
+
   updateYears(props = this.props) {
     this._min = parse(props.min);
     this._max = parse(props.max);
@@ -142,70 +151,62 @@ export default class Calendar extends Component {
     const maxMonth = this._max.getMonth();
 
     const months = [];
-    let year, month;
-    for (year = min; year <= max; year++) {
-      for (month = 0; month < 12; month++) {
-        if (
-          year === min && month < minMonth ||
-          year === max && month > maxMonth
-        ) {
+    for (let year = min; year <= max; year++) {
+      for (let month = 0; month < 12; month++) {
+        if ((year === min && month < minMonth) || (year === max && month > maxMonth)) {
           continue;
         }
-
-        months.push({month, year});
+        months.push({ month, year });
       }
     }
 
     this.months = months;
   }
-  getDisabledDates(disabledDates) {
-    return disabledDates && disabledDates.map((date) => format(parse(date), 'YYYY-MM-DD'));
-  }
-  _displayOptions = {};
-  getDisplayOptions(displayOptions = this.props.displayOptions) {
-    return Object.assign(this._displayOptions, defaultDisplayOptions, displayOptions);
-  }
-  _locale = {};
-  getLocale() {
-    return Object.assign(this._locale, defaultLocale, this.props.locale);
-  }
-  _theme = {};
-  getTheme() {
-    return Object.assign(this._theme, defaultTheme, this.props.theme);
-  }
-  getCurrentOffset = () => {
-    return this.scrollTop;
-  }
-  getDateOffset = (date) => {
-    return this._MonthList && this._MonthList.getDateOffset(date);
-  };
-  scrollTo = (offset) => {
-    return this._MonthList && this._MonthList.scrollTo(offset);
-  }
-  scrollToDate = (date = new Date(), offset, shouldAnimate) => {
-    const {display} = this.props;
 
-    return this._MonthList &&
-      this._MonthList.scrollToDate(
+  getDisabledDates(disabledDates) {
+    return disabledDates && disabledDates.map(date => format(parse(date), 'yyyy-MM-dd'));
+  }
+
+  getDisplayOptions(displayOptions = this.props.displayOptions) {
+    return { ...defaultDisplayOptions, ...displayOptions };
+  }
+
+  getLocale() {
+    return { ...defaultLocale, ...this.props.locale };
+  }
+
+  getTheme() {
+    return { ...defaultTheme, ...this.props.theme };
+  }
+
+  getCurrentOffset = () => this.scrollTop;
+
+  getDateOffset = (date) => this._MonthList.current && this._MonthList.current.getDateOffset(date);
+
+  scrollTo = (offset) => this._MonthList.current && this._MonthList.current.scrollTo(offset);
+
+  scrollToDate = (date = new Date(), offset, shouldAnimate) => {
+    const { display } = this.props;
+    return this._MonthList.current &&
+      this._MonthList.current.scrollToDate(
         date,
         offset,
         shouldAnimate && display === 'days',
-        () => this.setState({isScrolling: false}),
+        () => this.setState({ isScrolling: false })
       );
   };
+
   getScrollSpeed = new ScrollSpeed().getScrollSpeed;
+
   handleScroll = (scrollTop, e) => {
-    const {onScroll, rowHeight} = this.props;
-    const {isScrolling} = this.state;
-    const {showTodayHelper, showOverlay} = this.getDisplayOptions();
+    const { onScroll, rowHeight } = this.props;
+    const { isScrolling } = this.state;
+    const { showTodayHelper, showOverlay } = this.getDisplayOptions();
     const scrollSpeed = this.scrollSpeed = Math.abs(this.getScrollSpeed(scrollTop));
     this.scrollTop = scrollTop;
 
-		// We only want to display the months overlay if the user is rapidly scrolling
     if (showOverlay && scrollSpeed > rowHeight && !isScrolling) {
-      this.setState({
-        isScrolling: true,
-      });
+      this.setState({ isScrolling: true });
     }
 
     if (showTodayHelper) {
@@ -215,13 +216,14 @@ export default class Calendar extends Component {
     onScroll(scrollTop, e);
     this.handleScrollEnd();
   };
-  handleScrollEnd = debounce(() => {
-    const {onScrollEnd} = this.props;
-    const {isScrolling} = this.state;
-    const {showTodayHelper} = this.getDisplayOptions();
+
+  handleScrollEnd = () => {
+    const { onScrollEnd } = this.props;
+    const { isScrolling } = this.state;
+    const { showTodayHelper } = this.getDisplayOptions();
 
     if (isScrolling) {
-      this.setState({isScrolling: false});
+      this.setState({ isScrolling: false });
     }
 
     if (showTodayHelper) {
@@ -229,25 +231,23 @@ export default class Calendar extends Component {
     }
 
     onScrollEnd(this.scrollTop);
-  }, 150);
+  };
+
   updateTodayHelperPosition = (scrollSpeed) => {
     const today = this.today;
     const scrollTop = this.scrollTop;
-    const {showToday} = this.state;
-    const {height, rowHeight} = this.props;
-    const {todayHelperRowOffset} = this.getDisplayOptions();
+    const { showToday } = this.state;
+    const { height, rowHeight } = this.props;
+    const { todayHelperRowOffset } = this.getDisplayOptions();
     let newState;
 
     if (!this._todayOffset) {
       this._todayOffset = this.getDateOffset(today);
     }
 
-    // Today is above the fold
     if (scrollTop >= this._todayOffset + (height - rowHeight) / 2 + rowHeight * todayHelperRowOffset) {
       if (showToday !== DIRECTION_UP) newState = DIRECTION_UP;
-    }
-    // Today is below the fold
-    else if (scrollTop <= this._todayOffset - height / 2 - rowHeight * (todayHelperRowOffset + 1)) {
+    } else if (scrollTop <= this._todayOffset - height / 2 - rowHeight * (todayHelperRowOffset + 1)) {
       if (showToday !== DIRECTION_DOWN) newState = DIRECTION_DOWN;
     } else if (showToday && scrollSpeed <= 1) {
       newState = false;
@@ -258,28 +258,28 @@ export default class Calendar extends Component {
     }
 
     if (newState != null) {
-      this.setState({showToday: newState});
+      this.setState({ showToday: newState });
     }
   };
-  setDisplay = (display) => {
-    this.setState({display});
-  }
+
+  setDisplay = (display) => this.setState({ display });
+
   render() {
-    let {
-			className,
+    const {
+      className,
       passThrough,
       DayComponent,
-			disabledDays,
+      disabledDays,
       displayDate,
-			height,
+      height,
       HeaderComponent,
       rowHeight,
       scrollDate,
       selected,
-			tabIndex,
-			width,
+      tabIndex,
+      width,
       YearsComponent,
-		} = this.props;
+    } = this.props;
     const {
       hideYearsOnSelect,
       layout,
@@ -291,7 +291,7 @@ export default class Calendar extends Component {
       showTodayHelper,
       showWeekdays,
     } = this.getDisplayOptions();
-    const {display, isScrolling, showToday} = this.state;
+    const { display, isScrolling, showToday } = this.state;
     const disabledDates = this.getDisabledDates(this.props.disabledDates);
     const locale = this.getLocale();
     const theme = this.getTheme();
@@ -303,11 +303,9 @@ export default class Calendar extends Component {
         className={classNames(className, styles.container.root, {
           [styles.container.landscape]: layout === 'landscape',
         })}
-        style={{color: theme.textColor.default, width}}
+        style={{ color: theme.textColor.default, width }}
         aria-label="Calendar"
-        ref={node => {
-          this.node = node;
-        }}
+        ref={this.node}
         {...passThrough.rootNode}
       >
         {showHeader &&
@@ -340,9 +338,7 @@ export default class Calendar extends Component {
               />
             }
             <MonthList
-              ref={instance => {
-                this._MonthList = instance;
-              }}
+              ref={this._MonthList}
               DayComponent={DayComponent}
               disabledDates={disabledDates}
               disabledDays={disabledDays}
@@ -367,9 +363,7 @@ export default class Calendar extends Component {
           </div>
           {display === 'years' &&
             <YearsComponent
-              ref={instance => {
-                this._Years = instance;
-              }}
+              ref={this._Years}
               height={height}
               hideOnSelect={hideYearsOnSelect}
               locale={locale}
@@ -392,4 +386,6 @@ export default class Calendar extends Component {
       </div>
     );
   }
-};
+}
+
+export default Calendar;

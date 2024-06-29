@@ -1,5 +1,5 @@
 import React from 'react';
-import {render} from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import InfiniteCalendar, {
   Calendar,
   withRange,
@@ -8,7 +8,7 @@ import 'react-infinite-calendar/styles.css';
 
 const CalendarWithRange = withRange(Calendar);
 
-render(
+const App = () => (
   <InfiniteCalendar
     Component={CalendarWithRange}
     selected={{
@@ -18,6 +18,8 @@ render(
     locale={{
       headerFormat: 'MMM Do',
     }}
-  />,
-  document.querySelector('#root')
+  />
 );
+
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);

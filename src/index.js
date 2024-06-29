@@ -1,49 +1,49 @@
-import React, {Component} from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Calendar from './Calendar';
-import {withDateSelection} from './Calendar/withDateSelection';
+import { withDateSelection } from './Calendar/withDateSelection';
 
-export {default as Calendar} from './Calendar';
-export {withDateSelection} from './Calendar/withDateSelection';
-export {withKeyboardSupport} from './Calendar/withKeyboardSupport';
-export {withMultipleDates, defaultMultipleDateInterpolation} from './Calendar/withMultipleDates';
-export {withRange, EVENT_TYPE} from './Calendar/withRange';
+export { default as Calendar } from './Calendar';
+export { withDateSelection } from './Calendar/withDateSelection';
+export { withKeyboardSupport } from './Calendar/withKeyboardSupport';
+export { withMultipleDates, defaultMultipleDateInterpolation } from './Calendar/withMultipleDates';
+export { withRange, EVENT_TYPE } from './Calendar/withRange';
 
 /*
  * By default, Calendar is a controlled component.
  * Export a sensible default for minimal setup
  */
-export default class DefaultCalendar extends Component {
-  static defaultProps = {
-    Component: withDateSelection(Calendar),
-    interpolateSelection: (selected) => selected,
-  };
-  state = {
-    selected: typeof this.props.selected !== 'undefined'
-      ? this.props.selected
-      : new Date(),
-  };
-  componentWillReceiveProps({selected}) {
-    if (selected !== this.props.selected) {
-      this.setState({selected});
+const DefaultCalendar = ({
+  selected: selectedProp,
+  onSelect,
+  interpolateSelection = (selected) => selected,
+  Component = withDateSelection(Calendar),
+  ...props
+}) => {
+  const [selected, setSelected] = useState(selectedProp || new Date());
+
+  useEffect(() => {
+    if (selectedProp !== selected) {
+      setSelected(selectedProp);
     }
-  }
-  handleSelect = (selected) => {
-    const {onSelect, interpolateSelection} = this.props;
+  }, [selectedProp]);
 
-    if (typeof onSelect === 'function') { onSelect(selected); }
+  const handleSelect = useCallback(
+    (selected) => {
+      if (typeof onSelect === 'function') {
+        onSelect(selected);
+      }
+      setSelected(interpolateSelection(selected, selected));
+    },
+    [onSelect, interpolateSelection]
+  );
 
-    this.setState({selected: interpolateSelection(selected, this.state.selected)});
-  }
-  render() {
-    // eslint-disable-next-line no-unused-vars
-    const {Component, interpolateSelection, ...props} = this.props;
+  return (
+    <Component
+      {...props}
+      onSelect={handleSelect}
+      selected={selected}
+    />
+  );
+};
 
-    return (
-      <Component
-        {...props}
-        onSelect={this.handleSelect}
-        selected={this.state.selected}
-      />
-    );
-  }
-}
+export default DefaultCalendar;

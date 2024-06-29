@@ -1,12 +1,13 @@
 import React from 'react';
-import {render} from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import InfiniteCalendar from 'react-infinite-calendar';
 import 'react-infinite-calendar/styles.css';
+import { fr } from 'date-fns/locale';
 
 const locale = {
   blank: 'Aucune date sélectionnée',
   headerFormat: 'dddd, D MMM',
-  locale: require('date-fns/locale/fr'), // You need to pass in the date-fns locale for the language you want (unless it's EN)
+  locale: fr, // Pass in the date-fns locale for the language you want (in this case, French)
   todayLabel: {
     long: "Aujourd'hui",
     short: 'Auj.',
@@ -15,5 +16,7 @@ const locale = {
   weekStartsOn: 1, // Start the week on Monday
 };
 
-// All props are optional, so this is the minimum setup you need
-render(<InfiniteCalendar locale={locale} />, document.querySelector('#root'));
+const App = () => <InfiniteCalendar locale={locale} />;
+
+const root = createRoot(document.getElementById('root'));
+root.render(<App />);
