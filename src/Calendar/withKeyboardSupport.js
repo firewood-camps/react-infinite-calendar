@@ -1,8 +1,5 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import addDays from 'date-fns/addDays';
-import format from 'date-fns/format';
-import isAfter from 'date-fns/isAfter';
-import isBefore from 'date-fns/isBefore';
+import { addDays, format, isAfter, isBefore } from 'date-fns';
 import { keyCodes, withImmutableProps } from '../utils';
 
 const enhanceDay = (DayComponent) => (props) => {

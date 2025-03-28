@@ -1,14 +1,25 @@
-module.exports = {
+import path from 'path';
+
+export default {
   module: {
-    loaders: [
+    rules: [
       {
-        test: /(\.scss)$/,
-        loaders: [
-          'style',
-          'css?sourceMap&modules&importLoaders=1&localIdentName=[name]__[local]',
-          'sass?sourceMap'
-        ]
+        test: /\.m?js$/,
+        exclude: /(node_modules|bower_components)/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env', '@babel/preset-react']
+          }
+        }
+      },
+      {
+        test: /\.scss$/,
+        use: ['style-loader', 'css-loader', 'sass-loader']
       }
     ]
+  },
+  resolve: {
+    extensions: ['.js', '.jsx', '.mjs']
   }
 };

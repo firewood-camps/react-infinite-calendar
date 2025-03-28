@@ -9,8 +9,7 @@ import {
   getWeeksInMonth,
   animate,
 } from '../utils';
-import parse from 'date-fns/parse';
-import startOfMonth from 'date-fns/startOfMonth';
+import { parse, startOfMonth } from 'date-fns';
 import Month from '../Month';
 import styles from './MonthList.scss';
 

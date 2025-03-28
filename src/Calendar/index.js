@@ -12,9 +12,7 @@ import MonthList from '../MonthList';
 import Weekdays from '../Weekdays';
 import Years from '../Years';
 import Day from '../Day';
-import parse from 'date-fns/parse';
-import format from 'date-fns/format';
-import startOfDay from 'date-fns/startOfDay';
+import { parse, format, startOfDay } from 'date-fns';
 
 const styles = {
   container: require('./Container.scss'),

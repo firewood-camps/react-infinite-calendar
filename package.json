@@ -1,68 +1,72 @@
 {
   "name": "react-infinite-calendar",
-  "version": "2.3.1",
+  "version": "2.4.0",
   "description": "Infinite scrolling date-picker built with React, with localization, themes, keyboard support, and more.",
-  "main": "lib/index.js",
-  "module": "es/index.js",
+  "main": "dist/react-infinite-calendar.cjs.js",
+  "module": "dist/react-infinite-calendar.esm.js",
+  "type": "module",
   "files": [
-    "css",
-    "es",
-    "lib",
-    "umd",
-    "styles.css"
+    "dist",
+    "src"
   ],
   "scripts": {
-    "build": "npm run clean && nwb build-react-component --no-vendor",
-    "clean": "nwb clean-module && nwb clean-demo",
-    "start": "nwb serve-react-demo",
-    "storybook": "start-storybook -p 9001 -c .storybook",
-    "test": "nwb test-react",
-    "test:coverage": "nwb test-react --coverage",
-    "test:watch": "nwb test-react --server",
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "storybook": "storybook dev -p 9001",
+    "test": "jest",
     "lint": "eslint --fix src/**/*.js"
   },
   "dependencies": {
-    "classnames": "^2.2.5",
-    "date-fns": "^1.27.2",
-    "dom-helpers": "^3.2.1",
-    "prop-types": "^15.5.7",
-    "react-tiny-virtual-list": "^2.0.0",
-    "react-transition-group": "^1.1.3",
-    "recompose": "^0.22.0"
+    "classnames": "^2.5.1",
+    "date-fns": "^2.30.0",
+    "dom-helpers": "^5.2.1",
+    "prop-types": "^15.8.1",
+    "react-tiny-virtual-list": "^2.2.0",
+    "react-transition-group": "^4.4.5",
+    "recompose": "^0.30.0"
   },
   "peerDependencies": {
-    "react": "^15.3.0 || ^16.0.0-alpha"
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
   },
   "devDependencies": {
-    "@kadira/storybook": "^2.35.3",
-    "@kadira/storybook-addon-options": "^1.0.1",
-    "babel-eslint": "^7.0.0",
-    "babel-plugin-css-modules-transform": "^1.2.1",
-    "eslint": "^3.8.1",
-    "eslint-config-react-app": "^0.5.1",
-    "eslint-plugin-flowtype": "^2.21.0",
-    "eslint-plugin-import": "^2.0.1",
-    "eslint-plugin-jsx-a11y": "^2.2.3",
-    "eslint-plugin-react": "^6.4.1",
-    "node-sass": "^4.5.0",
-    "nwb": "^0.15.6",
-    "nwb-sass": "^0.7.1",
-    "react": "^15.4.2",
-    "react-dom": "^15.4.2"
+    "@babel/core": "^7.24.0",
+    "@babel/preset-env": "^7.24.0",
+    "@babel/preset-react": "^7.23.3",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-commonjs": "^25.0.7",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@storybook/react": "^7.6.17",
+    "@storybook/react-vite": "^7.6.17",
+    "@babel/eslint-parser": "^7.23.10",
+    "eslint": "^8.56.0",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-flowtype": "^8.0.3",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsx-a11y": "^6.9.0",
+    "eslint-plugin-react": "^7.34.3",
+    "jest": "^29.7.0",
+    "postcss": "^8.4.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "rollup": "^4.12.0",
+    "rollup-plugin-postcss": "^4.0.2",
+    "rollup-plugin-terser": "^7.0.2",
+    "sass": "^1.71.1"
   },
   "author": {
-    "name": "Clauderic Demers",
-    "email": "me@ced.io"
+    "name": "Buck O'Leary standing on the shoulders of the wonderful work of Clauderic Demers",
+    "email": "buck@firewoodcamps.com"
   },
-  "user": "clauderic",
-  "homepage": "https://github.com/clauderic/react-infinite-calendar",
+  "user": "buck3000",
+  "homepage": "https://github.com/firewoodcamps/react-infinite-calendar",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/clauderic/react-infinite-calendar.git"
+    "url": "https://github.com/firewoodcamps/react-infinite-calendar.git"
   },
   "bugs": {
-    "url": "https://github.com/clauderic/react-infinite-calendar/issues"
+    "url": "https://github.com/firewoodcamps/react-infinite-calendar/issues"
   },
   "keywords": [
     "react",

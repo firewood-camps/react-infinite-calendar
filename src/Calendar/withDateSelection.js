@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { withDefaultProps } from './';
 import { sanitizeDate, withImmutableProps } from '../utils';
-import format from 'date-fns/format';
-import parse from 'date-fns/parse';
+import { format, parse } from 'date-fns';
 
 const enhanceDay = (DayComponent) => (props) => {
   const isSelected = props.selected === props.date;

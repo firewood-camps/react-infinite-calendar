@@ -1,9 +1,7 @@
 import React, { useMemo } from 'react';
 import classNames from 'classnames';
 import { getDateString } from '../utils';
-import format from 'date-fns/format';
-import getDay from 'date-fns/getDay';
-import isSameYear from 'date-fns/isSameYear';
+import { parse, getDay, isSameYear } from 'date-fns';
 import styles from './Month.scss';
 
 const Month = ({

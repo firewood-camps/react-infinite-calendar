@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
-import parse from 'date-fns/parse';
+import { parse } from 'date-fns';
 import styles from './Day.scss';
 
 const Day = ({

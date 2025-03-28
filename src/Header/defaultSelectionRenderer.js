@@ -1,8 +1,7 @@
 import React from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import classNames from 'classnames';
-import parse from 'date-fns/parse';
-import format from 'date-fns/format';
+import { parse, format } from 'date-fns';
 import styles from './Header.scss';
 import animation from './Animation.scss';
 
