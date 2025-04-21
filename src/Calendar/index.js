@@ -1,20 +1,19 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { debounce, emptyFn, range, ScrollSpeed } from '../utils';
+import { debounce, emptyFn, range } from '../utils';
 import { defaultProps } from 'recompose';
-import defaultDisplayOptions from '../utils/defaultDisplayOptions';
-import defaultLocale from '../utils/defaultLocale';
-import defaultTheme from '../utils/defaultTheme';
 import Today, { DIRECTION_UP, DIRECTION_DOWN } from '../Today';
 import Header from '../Header';
 import MonthList from '../MonthList';
 import Weekdays from '../Weekdays';
 import Years from '../Years';
 import Day from '../Day';
-import parse from 'date-fns/parse';
-import format from 'date-fns/format';
 import startOfDay from 'date-fns/startOfDay';
+
+import useCalendarControls from '../hooks/useCalendarControls';
+import useCalendarMonths from '../hooks/useCalendarMonths';
+import useCalendarDisplay from '../hooks/useCalendarDisplay';
 
 const styles = {
   container: require('./Container.scss'),
@@ -47,104 +46,65 @@ export const withDefaultProps = defaultProps({
 /**
  * Calendar component - renders an infinite scrolling calendar
  * Converted from class component to functional component with hooks
+ * Uses custom hooks for better organization and reusability
  */
 const Calendar = (props) => {
-  const [display, setDisplayState] = useState(props.display);
-  const [isScrolling, setIsScrolling] = useState(false);
-  const [showToday, setShowToday] = useState(false);
-  
   const node = useRef(null);
   const monthListRef = useRef(null);
   const yearsRef = useRef(null);
-  const scrollTop = useRef(0);
-  const scrollSpeed = useRef(0);
   const todayOffset = useRef(null);
-  const months = useRef([]);
-  const minDate = useRef(null);
-  const maxDate = useRef(null);
-  const min = useRef(null);
-  const max = useRef(null);
   const today = useRef(startOfDay(new Date()));
   
-  const getScrollSpeed = useMemo(() => new ScrollSpeed().getScrollSpeed, []);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [showToday, setShowToday] = useState(false);
   
-  const updateYears = useCallback((propsToUse = props) => {
-    min.current = parse(propsToUse.min);
-    max.current = parse(propsToUse.max);
-    minDate.current = parse(propsToUse.minDate);
-    maxDate.current = parse(propsToUse.maxDate);
-
-    const minYear = min.current.getFullYear();
-    const minMonth = min.current.getMonth();
-    const maxYear = max.current.getFullYear();
-    const maxMonth = max.current.getMonth();
-
-    const monthsArray = [];
-    for (let year = minYear; year <= maxYear; year++) {
-      for (let month = 0; month < 12; month++) {
-        if ((year === minYear && month < minMonth) || (year === maxYear && month > maxMonth)) {
-          continue;
-        }
-        monthsArray.push({ month, year });
-      }
-    }
-
-    months.current = monthsArray;
-  }, [props.min, props.max, props.minDate, props.maxDate]);
-
+  const { display, setDisplayMode, getDisplayOptions, getLocale, getTheme } = useCalendarDisplay({
+    display: props.display,
+    displayOptions: props.displayOptions,
+    locale: props.locale,
+    theme: props.theme
+  });
+  
+  const { months, minDate, maxDate, min, max, updateMonths, getYearsRange } = useCalendarMonths({
+    min: props.min,
+    max: props.max,
+    minDate: props.minDate,
+    maxDate: props.maxDate
+  });
+  
+  const { 
+    scrollTop, 
+    scrollSpeed, 
+    getScrollSpeed, 
+    getDateOffset, 
+    scrollTo, 
+    scrollToDate: scrollToDateBase, 
+    getDisabledDates,
+    updateScrollPosition 
+  } = useCalendarControls({
+    min: props.min,
+    max: props.max,
+    minDate: props.minDate,
+    maxDate: props.maxDate,
+    monthListRef
+  });
+  
   useEffect(() => {
-    updateYears();
+    updateMonths();
     
     if (props.autoFocus && node.current) {
       node.current.focus();
     }
-  }, []);
+  }, [updateMonths, props.autoFocus]);
   
-  useEffect(() => {
-    if (props.display !== display) {
-      setDisplayState(props.display);
-    }
-  }, [props.display]);
-  
-  useEffect(() => {
-    updateYears();
-  }, [props.min, props.minDate, props.max, props.maxDate]);
-  
-  const getDisabledDates = useCallback((disabledDates) => {
-    return disabledDates && disabledDates.map(date => format(parse(date), 'yyyy-MM-dd'));
-  }, []);
-
-  const getDisplayOptions = useCallback((displayOptions = props.displayOptions) => {
-    return { ...defaultDisplayOptions, ...displayOptions };
-  }, [props.displayOptions]);
-
-  const getLocale = useCallback(() => {
-    return { ...defaultLocale, ...props.locale };
-  }, [props.locale]);
-
-  const getTheme = useCallback(() => {
-    return { ...defaultTheme, ...props.theme };
-  }, [props.theme]);
-
-  const getCurrentOffset = useCallback(() => scrollTop.current, []);
-
-  const getDateOffset = useCallback((date) => {
-    return monthListRef.current && monthListRef.current.getDateOffset(date);
-  }, []);
-
-  const scrollTo = useCallback((offset) => {
-    return monthListRef.current && monthListRef.current.scrollTo(offset);
-  }, []);
-
   const scrollToDate = useCallback((date = new Date(), offset, shouldAnimate) => {
-    return monthListRef.current &&
-      monthListRef.current.scrollToDate(
-        date,
-        offset,
-        shouldAnimate && props.display === 'days',
-        () => setIsScrolling(false)
-      );
-  }, [props.display]);
+    return scrollToDateBase(
+      date,
+      offset,
+      shouldAnimate && props.display === 'days',
+      () => setIsScrolling(false)
+    );
+  }, [props.display, scrollToDateBase]);
 
   const handleScrollEnd = useCallback(debounce(() => {
     const { onScrollEnd } = props;
@@ -192,8 +152,8 @@ const Calendar = (props) => {
     const { onScroll, rowHeight } = props;
     const { showTodayHelper, showOverlay } = getDisplayOptions();
     const speed = Math.abs(getScrollSpeed(scrollTopValue));
-    scrollSpeed.current = speed;
-    scrollTop.current = scrollTopValue;
+    
+    updateScrollPosition(scrollTopValue, speed);
 
     if (showOverlay && speed > rowHeight && !isScrolling) {
       setIsScrolling(true);
@@ -205,11 +165,11 @@ const Calendar = (props) => {
 
     onScroll(scrollTopValue, e);
     handleScrollEnd();
-  }, [props.onScroll, props.rowHeight, getDisplayOptions, isScrolling, updateTodayHelperPosition, handleScrollEnd]);
+  }, [props.onScroll, props.rowHeight, getDisplayOptions, isScrolling, updateTodayHelperPosition, handleScrollEnd, updateScrollPosition, getScrollSpeed]);
 
   const setDisplay = useCallback((newDisplay) => {
-    setDisplayState(newDisplay);
-  }, []);
+    setDisplayMode(newDisplay);
+  }, [setDisplayMode]);
 
   const {
     className,
