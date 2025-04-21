@@ -1,20 +1,19 @@
-import React, { Component, createRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { debounce, emptyFn, range, ScrollSpeed } from '../utils';
+import { debounce, emptyFn, range } from '../utils';
 import { defaultProps } from 'recompose';
-import defaultDisplayOptions from '../utils/defaultDisplayOptions';
-import defaultLocale from '../utils/defaultLocale';
-import defaultTheme from '../utils/defaultTheme';
 import Today, { DIRECTION_UP, DIRECTION_DOWN } from '../Today';
 import Header from '../Header';
 import MonthList from '../MonthList';
 import Weekdays from '../Weekdays';
 import Years from '../Years';
 import Day from '../Day';
-import parse from 'date-fns/parse';
-import format from 'date-fns/format';
 import startOfDay from 'date-fns/startOfDay';
+
+import useCalendarControls from '../hooks/useCalendarControls';
+import useCalendarMonths from '../hooks/useCalendarMonths';
+import useCalendarDisplay from '../hooks/useCalendarDisplay';
 
 const styles = {
   container: require('./Container.scss'),
@@ -44,348 +43,315 @@ export const withDefaultProps = defaultProps({
   YearsComponent: Years,
 });
 
-class Calendar extends Component {
-  constructor(props) {
-    super(props);
-    this.updateYears(props);
-    this.state = {
-      display: props.display,
-      isScrolling: false,
-      showToday: false,
-    };
-    this.scrollTop = 0;
-    this.node = createRef();
-    this._MonthList = createRef();
-    this._Years = createRef();
-    this.handleScrollEnd = debounce(this.handleScrollEnd.bind(this), 150);
-  }
-
-  static propTypes = {
-    autoFocus: PropTypes.bool,
-    className: PropTypes.string,
-    DayComponent: PropTypes.func,
-    disabledDates: PropTypes.arrayOf(PropTypes.instanceOf(Date)),
-    disabledDays: PropTypes.arrayOf(PropTypes.number),
-    display: PropTypes.oneOf(['years', 'days']),
-    displayOptions: PropTypes.shape({
-      hideYearsOnSelect: PropTypes.bool,
-      layout: PropTypes.oneOf(['portrait', 'landscape']),
-      overscanMonthCount: PropTypes.number,
-      shouldHeaderAnimate: PropTypes.bool,
-      showHeader: PropTypes.bool,
-      showMonthsForYears: PropTypes.bool,
-      showOverlay: PropTypes.bool,
-      showTodayHelper: PropTypes.bool,
-      showWeekdays: PropTypes.bool,
-      todayHelperRowOffset: PropTypes.number,
-    }),
-    height: PropTypes.number,
-    keyboardSupport: PropTypes.bool,
-    locale: PropTypes.shape({
-      blank: PropTypes.string,
-      headerFormat: PropTypes.string,
-      todayLabel: PropTypes.shape({
-        long: PropTypes.string,
-        short: PropTypes.string,
-      }),
-      weekdays: PropTypes.arrayOf(PropTypes.string),
-      weekStartsOn: PropTypes.oneOf([0, 1, 2, 3, 4, 5, 6]),
-    }),
-    max: PropTypes.instanceOf(Date),
-    maxDate: PropTypes.instanceOf(Date),
-    min: PropTypes.instanceOf(Date),
-    minDate: PropTypes.instanceOf(Date),
-    onScroll: PropTypes.func,
-    onScrollEnd: PropTypes.func,
-    onSelect: PropTypes.func,
-    rowHeight: PropTypes.number,
-    tabIndex: PropTypes.number,
-    theme: PropTypes.shape({
-      floatingNav: PropTypes.shape({
-        background: PropTypes.string,
-        chevron: PropTypes.string,
-        color: PropTypes.string,
-      }),
-      headerColor: PropTypes.string,
-      selectionColor: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
-      textColor: PropTypes.shape({
-        active: PropTypes.string,
-        default: PropTypes.string,
-      }),
-      todayColor: PropTypes.string,
-      weekdayColor: PropTypes.string,
-    }),
-    width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    YearsComponent: PropTypes.func,
-  };
-
-  static getDerivedStateFromProps(nextProps, prevState) {
-    if (nextProps.display !== prevState.display) {
-      return { display: nextProps.display };
+/**
+ * Calendar component - renders an infinite scrolling calendar
+ * Converted from class component to functional component with hooks
+ * Uses custom hooks for better organization and reusability
+ */
+const Calendar = (props) => {
+  const node = useRef(null);
+  const monthListRef = useRef(null);
+  const yearsRef = useRef(null);
+  const todayOffset = useRef(null);
+  const today = useRef(startOfDay(new Date()));
+  
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [showToday, setShowToday] = useState(false);
+  
+  const { display, setDisplayMode, getDisplayOptions, getLocale, getTheme } = useCalendarDisplay({
+    display: props.display,
+    displayOptions: props.displayOptions,
+    locale: props.locale,
+    theme: props.theme
+  });
+  
+  const { months, minDate, maxDate, min, max, updateMonths, getYearsRange } = useCalendarMonths({
+    min: props.min,
+    max: props.max,
+    minDate: props.minDate,
+    maxDate: props.maxDate
+  });
+  
+  const { 
+    scrollTop, 
+    scrollSpeed, 
+    getScrollSpeed, 
+    getDateOffset, 
+    scrollTo, 
+    scrollToDate: scrollToDateBase, 
+    getDisabledDates,
+    updateScrollPosition 
+  } = useCalendarControls({
+    min: props.min,
+    max: props.max,
+    minDate: props.minDate,
+    maxDate: props.maxDate,
+    monthListRef
+  });
+  
+  useEffect(() => {
+    updateMonths();
+    
+    if (props.autoFocus && node.current) {
+      node.current.focus();
     }
-    return null;
-  }
+  }, [updateMonths, props.autoFocus]);
+  
+  const scrollToDate = useCallback((date = new Date(), offset, shouldAnimate) => {
+    return scrollToDateBase(
+      date,
+      offset,
+      shouldAnimate && props.display === 'days',
+      () => setIsScrolling(false)
+    );
+  }, [props.display, scrollToDateBase]);
 
-  componentDidMount() {
-    if (this.props.autoFocus && this.node.current) {
-      this.node.current.focus();
-    }
-  }
-
-  componentDidUpdate(prevProps) {
-    const { min, minDate, max, maxDate } = this.props;
-    if (prevProps.min !== min || prevProps.minDate !== minDate || prevProps.max !== max || prevProps.maxDate !== maxDate) {
-      this.updateYears(this.props);
-    }
-  }
-
-  updateYears(props = this.props) {
-    this._min = parse(props.min);
-    this._max = parse(props.max);
-    this._minDate = parse(props.minDate);
-    this._maxDate = parse(props.maxDate);
-
-    const min = this._min.getFullYear();
-    const minMonth = this._min.getMonth();
-    const max = this._max.getFullYear();
-    const maxMonth = this._max.getMonth();
-
-    const months = [];
-    for (let year = min; year <= max; year++) {
-      for (let month = 0; month < 12; month++) {
-        if ((year === min && month < minMonth) || (year === max && month > maxMonth)) {
-          continue;
-        }
-        months.push({ month, year });
-      }
-    }
-
-    this.months = months;
-  }
-
-  getDisabledDates(disabledDates) {
-    return disabledDates && disabledDates.map(date => format(parse(date), 'yyyy-MM-dd'));
-  }
-
-  getDisplayOptions(displayOptions = this.props.displayOptions) {
-    return { ...defaultDisplayOptions, ...displayOptions };
-  }
-
-  getLocale() {
-    return { ...defaultLocale, ...this.props.locale };
-  }
-
-  getTheme() {
-    return { ...defaultTheme, ...this.props.theme };
-  }
-
-  getCurrentOffset = () => this.scrollTop;
-
-  getDateOffset = (date) => this._MonthList.current && this._MonthList.current.getDateOffset(date);
-
-  scrollTo = (offset) => this._MonthList.current && this._MonthList.current.scrollTo(offset);
-
-  scrollToDate = (date = new Date(), offset, shouldAnimate) => {
-    const { display } = this.props;
-    return this._MonthList.current &&
-      this._MonthList.current.scrollToDate(
-        date,
-        offset,
-        shouldAnimate && display === 'days',
-        () => this.setState({ isScrolling: false })
-      );
-  };
-
-  getScrollSpeed = new ScrollSpeed().getScrollSpeed;
-
-  handleScroll = (scrollTop, e) => {
-    const { onScroll, rowHeight } = this.props;
-    const { isScrolling } = this.state;
-    const { showTodayHelper, showOverlay } = this.getDisplayOptions();
-    const scrollSpeed = this.scrollSpeed = Math.abs(this.getScrollSpeed(scrollTop));
-    this.scrollTop = scrollTop;
-
-    if (showOverlay && scrollSpeed > rowHeight && !isScrolling) {
-      this.setState({ isScrolling: true });
-    }
-
-    if (showTodayHelper) {
-      this.updateTodayHelperPosition(scrollSpeed);
-    }
-
-    onScroll(scrollTop, e);
-    this.handleScrollEnd();
-  };
-
-  handleScrollEnd = () => {
-    const { onScrollEnd } = this.props;
-    const { isScrolling } = this.state;
-    const { showTodayHelper } = this.getDisplayOptions();
+  const handleScrollEnd = useCallback(debounce(() => {
+    const { onScrollEnd } = props;
+    const { showTodayHelper } = getDisplayOptions();
 
     if (isScrolling) {
-      this.setState({ isScrolling: false });
+      setIsScrolling(false);
     }
 
     if (showTodayHelper) {
-      this.updateTodayHelperPosition(0);
+      updateTodayHelperPosition(0);
     }
 
-    onScrollEnd(this.scrollTop);
-  };
+    onScrollEnd(scrollTop.current);
+  }, 150), [props.onScrollEnd, isScrolling, getDisplayOptions]);
 
-  updateTodayHelperPosition = (scrollSpeed) => {
-    const today = this.today;
-    const scrollTop = this.scrollTop;
-    const { showToday } = this.state;
-    const { height, rowHeight } = this.props;
-    const { todayHelperRowOffset } = this.getDisplayOptions();
+  const updateTodayHelperPosition = useCallback((speed) => {
+    const currentScrollTop = scrollTop.current;
+    const { height, rowHeight } = props;
+    const { todayHelperRowOffset } = getDisplayOptions();
     let newState;
 
-    if (!this._todayOffset) {
-      this._todayOffset = this.getDateOffset(today);
+    if (!todayOffset.current) {
+      todayOffset.current = getDateOffset(today.current);
     }
 
-    if (scrollTop >= this._todayOffset + (height - rowHeight) / 2 + rowHeight * todayHelperRowOffset) {
+    if (currentScrollTop >= todayOffset.current + (height - rowHeight) / 2 + rowHeight * todayHelperRowOffset) {
       if (showToday !== DIRECTION_UP) newState = DIRECTION_UP;
-    } else if (scrollTop <= this._todayOffset - height / 2 - rowHeight * (todayHelperRowOffset + 1)) {
+    } else if (currentScrollTop <= todayOffset.current - height / 2 - rowHeight * (todayHelperRowOffset + 1)) {
       if (showToday !== DIRECTION_DOWN) newState = DIRECTION_DOWN;
-    } else if (showToday && scrollSpeed <= 1) {
+    } else if (showToday && speed <= 1) {
       newState = false;
     }
 
-    if (scrollTop === 0) {
+    if (currentScrollTop === 0) {
       newState = false;
     }
 
     if (newState != null) {
-      this.setState({ showToday: newState });
+      setShowToday(newState);
     }
-  };
+  }, [props.height, props.rowHeight, getDisplayOptions, getDateOffset, showToday]);
 
-  setDisplay = (display) => this.setState({ display });
+  const handleScroll = useCallback((scrollTopValue, e) => {
+    const { onScroll, rowHeight } = props;
+    const { showTodayHelper, showOverlay } = getDisplayOptions();
+    const speed = Math.abs(getScrollSpeed(scrollTopValue));
+    
+    updateScrollPosition(scrollTopValue, speed);
 
-  render() {
-    const {
-      className,
-      passThrough,
-      DayComponent,
-      disabledDays,
-      displayDate,
-      height,
-      HeaderComponent,
-      rowHeight,
-      scrollDate,
-      selected,
-      tabIndex,
-      width,
-      YearsComponent,
-    } = this.props;
-    const {
-      hideYearsOnSelect,
-      layout,
-      overscanMonthCount,
-      shouldHeaderAnimate,
-      showHeader,
-      showMonthsForYears,
-      showOverlay,
-      showTodayHelper,
-      showWeekdays,
-    } = this.getDisplayOptions();
-    const { display, isScrolling, showToday } = this.state;
-    const disabledDates = this.getDisabledDates(this.props.disabledDates);
-    const locale = this.getLocale();
-    const theme = this.getTheme();
-    const today = this.today = startOfDay(new Date());
+    if (showOverlay && speed > rowHeight && !isScrolling) {
+      setIsScrolling(true);
+    }
 
-    return (
-      <div
-        tabIndex={tabIndex}
-        className={classNames(className, styles.container.root, {
-          [styles.container.landscape]: layout === 'landscape',
-        })}
-        style={{ color: theme.textColor.default, width }}
-        aria-label="Calendar"
-        ref={this.node}
-        {...passThrough.rootNode}
-      >
-        {showHeader &&
-          <HeaderComponent
-            selected={selected}
-            shouldAnimate={Boolean(shouldHeaderAnimate && display !== 'years')}
-            layout={layout}
-            theme={theme}
+    if (showTodayHelper) {
+      updateTodayHelperPosition(speed);
+    }
+
+    onScroll(scrollTopValue, e);
+    handleScrollEnd();
+  }, [props.onScroll, props.rowHeight, getDisplayOptions, isScrolling, updateTodayHelperPosition, handleScrollEnd, updateScrollPosition, getScrollSpeed]);
+
+  const setDisplay = useCallback((newDisplay) => {
+    setDisplayMode(newDisplay);
+  }, [setDisplayMode]);
+
+  const {
+    className,
+    passThrough,
+    DayComponent,
+    disabledDays,
+    displayDate,
+    height,
+    HeaderComponent,
+    rowHeight,
+    scrollDate,
+    selected,
+    tabIndex,
+    width,
+    YearsComponent,
+  } = props;
+  
+  const {
+    hideYearsOnSelect,
+    layout,
+    overscanMonthCount,
+    shouldHeaderAnimate,
+    showHeader,
+    showMonthsForYears,
+    showOverlay,
+    showTodayHelper,
+    showWeekdays,
+  } = getDisplayOptions();
+  
+  const disabledDates = getDisabledDates(props.disabledDates);
+  const locale = getLocale();
+  const theme = getTheme();
+  
+  today.current = startOfDay(new Date());
+
+  return (
+    <div
+      tabIndex={tabIndex}
+      className={classNames(className, styles.container.root, {
+        [styles.container.landscape]: layout === 'landscape',
+      })}
+      style={{ color: theme.textColor.default, width }}
+      aria-label="Calendar"
+      ref={node}
+      {...passThrough.rootNode}
+    >
+      {showHeader &&
+        <HeaderComponent
+          selected={selected}
+          shouldAnimate={Boolean(shouldHeaderAnimate && display !== 'years')}
+          layout={layout}
+          theme={theme}
+          locale={locale}
+          scrollToDate={scrollToDate}
+          setDisplay={setDisplay}
+          dateFormat={locale.headerFormat}
+          display={display}
+          displayDate={displayDate}
+          {...passThrough.Header}
+        />
+      }
+      <div className={styles.container.wrapper}>
+        {showWeekdays &&
+          <Weekdays weekdays={locale.weekdays} weekStartsOn={locale.weekStartsOn} theme={theme} />
+        }
+        <div className={styles.container.listWrapper}>
+          {showTodayHelper &&
+            <Today
+              scrollToDate={scrollToDate}
+              show={showToday}
+              today={today.current}
+              theme={theme}
+              todayLabel={locale.todayLabel.long}
+            />
+          }
+          <MonthList
+            ref={monthListRef}
+            DayComponent={DayComponent}
+            disabledDates={disabledDates}
+            disabledDays={disabledDays}
+            height={height}
+            isScrolling={isScrolling}
             locale={locale}
-            scrollToDate={this.scrollToDate}
-            setDisplay={this.setDisplay}
-            dateFormat={locale.headerFormat}
-            display={display}
-            displayDate={displayDate}
-            {...passThrough.Header}
+            maxDate={maxDate.current}
+            min={min.current}
+            minDate={minDate.current}
+            months={months.current}
+            onScroll={handleScroll}
+            overscanMonthCount={overscanMonthCount}
+            passThrough={passThrough}
+            theme={theme}
+            today={today.current}
+            rowHeight={rowHeight}
+            selected={selected}
+            scrollDate={scrollDate}
+            showOverlay={showOverlay}
+            width={width}
+          />
+        </div>
+        {display === 'years' &&
+          <YearsComponent
+            ref={yearsRef}
+            height={height}
+            hideOnSelect={hideYearsOnSelect}
+            locale={locale}
+            max={max.current}
+            maxDate={maxDate.current}
+            min={min.current}
+            minDate={minDate.current}
+            scrollToDate={scrollToDate}
+            selected={selected}
+            setDisplay={setDisplay}
+            showMonths={showMonthsForYears}
+            theme={theme}
+            today={today.current}
+            width={width}
+            years={range(min.current.getFullYear(), max.current.getFullYear() + 1)}
+            {...passThrough.Years}
           />
         }
-        <div className={styles.container.wrapper}>
-          {showWeekdays &&
-            <Weekdays weekdays={locale.weekdays} weekStartsOn={locale.weekStartsOn} theme={theme} />
-          }
-          <div className={styles.container.listWrapper}>
-            {showTodayHelper &&
-              <Today
-                scrollToDate={this.scrollToDate}
-                show={showToday}
-                today={today}
-                theme={theme}
-                todayLabel={locale.todayLabel.long}
-              />
-            }
-            <MonthList
-              ref={this._MonthList}
-              DayComponent={DayComponent}
-              disabledDates={disabledDates}
-              disabledDays={disabledDays}
-              height={height}
-              isScrolling={isScrolling}
-              locale={locale}
-              maxDate={this._maxDate}
-              min={this._min}
-              minDate={this._minDate}
-              months={this.months}
-              onScroll={this.handleScroll}
-              overscanMonthCount={overscanMonthCount}
-              passThrough={passThrough}
-              theme={theme}
-              today={today}
-              rowHeight={rowHeight}
-              selected={selected}
-              scrollDate={scrollDate}
-              showOverlay={showOverlay}
-              width={width}
-            />
-          </div>
-          {display === 'years' &&
-            <YearsComponent
-              ref={this._Years}
-              height={height}
-              hideOnSelect={hideYearsOnSelect}
-              locale={locale}
-              max={this._max}
-              maxDate={this._maxDate}
-              min={this._min}
-              minDate={this._minDate}
-              scrollToDate={this.scrollToDate}
-              selected={selected}
-              setDisplay={this.setDisplay}
-              showMonths={showMonthsForYears}
-              theme={theme}
-              today={today}
-              width={width}
-              years={range(this._min.getFullYear(), this._max.getFullYear() + 1)}
-              {...passThrough.Years}
-            />
-          }
-        </div>
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
+
+Calendar.propTypes = {
+  autoFocus: PropTypes.bool,
+  className: PropTypes.string,
+  DayComponent: PropTypes.func,
+  disabledDates: PropTypes.arrayOf(PropTypes.instanceOf(Date)),
+  disabledDays: PropTypes.arrayOf(PropTypes.number),
+  display: PropTypes.oneOf(['years', 'days']),
+  displayOptions: PropTypes.shape({
+    hideYearsOnSelect: PropTypes.bool,
+    layout: PropTypes.oneOf(['portrait', 'landscape']),
+    overscanMonthCount: PropTypes.number,
+    shouldHeaderAnimate: PropTypes.bool,
+    showHeader: PropTypes.bool,
+    showMonthsForYears: PropTypes.bool,
+    showOverlay: PropTypes.bool,
+    showTodayHelper: PropTypes.bool,
+    showWeekdays: PropTypes.bool,
+    todayHelperRowOffset: PropTypes.number,
+  }),
+  height: PropTypes.number,
+  keyboardSupport: PropTypes.bool,
+  locale: PropTypes.shape({
+    blank: PropTypes.string,
+    headerFormat: PropTypes.string,
+    todayLabel: PropTypes.shape({
+      long: PropTypes.string,
+      short: PropTypes.string,
+    }),
+    weekdays: PropTypes.arrayOf(PropTypes.string),
+    weekStartsOn: PropTypes.oneOf([0, 1, 2, 3, 4, 5, 6]),
+  }),
+  max: PropTypes.instanceOf(Date),
+  maxDate: PropTypes.instanceOf(Date),
+  min: PropTypes.instanceOf(Date),
+  minDate: PropTypes.instanceOf(Date),
+  onScroll: PropTypes.func,
+  onScrollEnd: PropTypes.func,
+  onSelect: PropTypes.func,
+  rowHeight: PropTypes.number,
+  tabIndex: PropTypes.number,
+  theme: PropTypes.shape({
+    floatingNav: PropTypes.shape({
+      background: PropTypes.string,
+      chevron: PropTypes.string,
+      color: PropTypes.string,
+    }),
+    headerColor: PropTypes.string,
+    selectionColor: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
+    textColor: PropTypes.shape({
+      active: PropTypes.string,
+      default: PropTypes.string,
+    }),
+    todayColor: PropTypes.string,
+    weekdayColor: PropTypes.string,
+  }),
+  width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  YearsComponent: PropTypes.func,
+};
 
 export default Calendar;
