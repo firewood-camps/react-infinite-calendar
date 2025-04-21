@@ -1,11 +1,16 @@
 import React from 'react';
-import {render} from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import InfiniteCalendar from '../../src';
 import '../../styles.css';
 import './demo.css';
 
-render(
-  <InfiniteCalendar
-    width={Math.min(window.innerWidth, 400)}
-  />
-, document.querySelector('#demo'));
+const container = document.querySelector('#demo');
+const root = createRoot(container);
+
+root.render(
+  <React.StrictMode>
+    <InfiniteCalendar
+      width={Math.min(window.innerWidth, 400)}
+    />
+  </React.StrictMode>
+);
