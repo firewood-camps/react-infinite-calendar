@@ -6,7 +6,7 @@ import isBefore from 'date-fns/isBefore';
 import enhanceHeader from '../Header/withRange';
 import format from 'date-fns/format';
 import parse from 'date-fns/parse';
-import styles from '../Day/Day.scss';
+import styles from '../Day/Day.module.scss';
 
 let isTouchDevice = false;
 

@@ -1,26 +1,28 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
-import { debounce, emptyFn, range } from '../utils';
-import { defaultProps } from 'recompose';
-import Today, { DIRECTION_UP, DIRECTION_DOWN } from '../Today';
-import Header from '../Header';
-import MonthList from '../MonthList';
-import Weekdays from '../Weekdays';
-import Years from '../Years';
-import Day from '../Day';
+import { debounce, emptyFn, range } from '../utils/index.jsx';
+import Today, { DIRECTION_UP, DIRECTION_DOWN } from '../Today/index.jsx';
+import Header from '../Header/index.jsx';
+import MonthList from '../MonthList/index.jsx';
+import Weekdays from '../Weekdays/index.jsx';
+import YearsComponent from '../Years/YearsComponent.jsx';
+import Day from '../Day/index.jsx';
 import startOfDay from 'date-fns/startOfDay';
 
-import useCalendarControls from '../hooks/useCalendarControls';
-import useCalendarMonths from '../hooks/useCalendarMonths';
-import useCalendarDisplay from '../hooks/useCalendarDisplay';
+import useCalendarControls from '../hooks/useCalendarControls.jsx';
+import useCalendarMonths from '../hooks/useCalendarMonths.jsx';
+import useCalendarDisplay from '../hooks/useCalendarDisplay.jsx';
+
+import containerStyles from './Container.module.scss';
+import dayStyles from '../Day/Day.module.scss';
 
 const styles = {
-  container: require('./Container.scss'),
-  day: require('../Day/Day.scss'),
+  container: containerStyles,
+  day: dayStyles,
 };
 
-export const withDefaultProps = defaultProps({
+const defaultCalendarProps = {
   autoFocus: true,
   DayComponent: Day,
   display: 'days',
@@ -40,15 +42,16 @@ export const withDefaultProps = defaultProps({
   rowHeight: 56,
   tabIndex: 1,
   width: 400,
-  YearsComponent: Years,
-});
+  YearsComponent,
+};
 
 /**
  * Calendar component - renders an infinite scrolling calendar
  * Converted from class component to functional component with hooks
  * Uses custom hooks for better organization and reusability
  */
-const Calendar = (props) => {
+const Calendar = (userProps) => {
+  const props = { ...defaultCalendarProps, ...userProps };
   const node = useRef(null);
   const monthListRef = useRef(null);
   const yearsRef = useRef(null);
@@ -214,7 +217,7 @@ const Calendar = (props) => {
       style={{ color: theme.textColor.default, width }}
       aria-label="Calendar"
       ref={node}
-      {...passThrough.rootNode}
+      {...(passThrough && passThrough.rootNode ? passThrough.rootNode : {})}
     >
       {showHeader &&
         <HeaderComponent
@@ -228,7 +231,7 @@ const Calendar = (props) => {
           dateFormat={locale.headerFormat}
           display={display}
           displayDate={displayDate}
-          {...passThrough.Header}
+          {...(passThrough && passThrough.Header ? passThrough.Header : {})}
         />
       }
       <div className={styles.container.wrapper}>
@@ -253,10 +256,10 @@ const Calendar = (props) => {
             height={height}
             isScrolling={isScrolling}
             locale={locale}
-            maxDate={maxDate.current}
-            min={min.current}
-            minDate={minDate.current}
-            months={months.current}
+            maxDate={maxDate && maxDate.current ? maxDate.current : props.maxDate}
+            min={min && min.current ? min.current : props.min}
+            minDate={minDate && minDate.current ? minDate.current : props.minDate}
+            months={months && months.current ? months.current : []}
             onScroll={handleScroll}
             overscanMonthCount={overscanMonthCount}
             passThrough={passThrough}
@@ -275,10 +278,10 @@ const Calendar = (props) => {
             height={height}
             hideOnSelect={hideYearsOnSelect}
             locale={locale}
-            max={max.current}
-            maxDate={maxDate.current}
-            min={min.current}
-            minDate={minDate.current}
+            max={max && max.current ? max.current : props.max}
+            maxDate={maxDate && maxDate.current ? maxDate.current : props.maxDate}
+            min={min && min.current ? min.current : props.min}
+            minDate={minDate && minDate.current ? minDate.current : props.minDate}
             scrollToDate={scrollToDate}
             selected={selected}
             setDisplay={setDisplay}
@@ -286,8 +289,10 @@ const Calendar = (props) => {
             theme={theme}
             today={today.current}
             width={width}
-            years={range(min.current.getFullYear(), max.current.getFullYear() + 1)}
-            {...passThrough.Years}
+            years={min && min.current && max && max.current ? 
+              range(min.current.getFullYear(), max.current.getFullYear() + 1) : 
+              range(props.min.getFullYear(), props.max.getFullYear() + 1)}
+            {...(passThrough && passThrough.Years ? passThrough.Years : {})}
           />
         }
       </div>
@@ -352,6 +357,10 @@ Calendar.propTypes = {
   }),
   width: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   YearsComponent: PropTypes.func,
+};
+
+export const withDefaultProps = (Component) => {
+  return (props) => <Component {...defaultCalendarProps} {...props} />;
 };
 
 export default Calendar;

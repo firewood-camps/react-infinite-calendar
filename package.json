@@ -11,15 +11,13 @@
     "umd",
     "styles.css"
   ],
+  "type": "module",
   "scripts": {
-    "build": "npm run clean && nwb build-react-component --no-vendor",
-    "clean": "nwb clean-module && nwb clean-demo",
-    "start": "nwb serve-react-demo",
-    "storybook": "start-storybook -p 9001 -c .storybook",
-    "test": "nwb test-react",
-    "test:coverage": "nwb test-react --coverage",
-    "test:watch": "nwb test-react --server",
-    "lint": "eslint --fix src/**/*.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "lint": "eslint --fix src/**/*.{js,jsx}"
   },
   "dependencies": {
     "classnames": "^2.5.1",
@@ -36,19 +34,26 @@
   "devDependencies": {
     "@kadira/storybook": "^2.35.3",
     "@kadira/storybook-addon-options": "^1.0.1",
-    "babel-eslint": "^7.0.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@vitejs/plugin-react-swc": "^3.9.0",
     "babel-plugin-css-modules-transform": "^1.6.2",
-    "eslint": "^3.8.1",
+    "eslint": "^9",
     "eslint-config-react-app": "^0.5.1",
     "eslint-plugin-flowtype": "^2.21.0",
-    "eslint-plugin-import": "^2.0.1",
-    "eslint-plugin-jsx-a11y": "^2.2.3",
-    "eslint-plugin-react": "^6.4.1",
-    "node-sass": "^4.5.0",
-    "nwb": "^0.15.6",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^6.0.0",
+    "jsdom": "^26.1.0",
     "nwb-sass": "^0.7.1",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "sass": "^1.86.3",
+    "vite": "^6.3.2",
+    "vitest": "^3.1.2"
   },
   "author": {
     "name": "Clauderic Demers",

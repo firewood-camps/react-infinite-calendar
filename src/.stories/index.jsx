@@ -1,4 +1,4 @@
-/* eslint-disable sort-keys */
+ 
 import React from 'react';
 import {addDecorator, storiesOf} from '@kadira/storybook';
 import InfiniteCalendar, {
@@ -9,7 +9,7 @@ import InfiniteCalendar, {
   withMultipleDates,
   withRange,
 } from '../';
-import styles from './stories.scss';
+import styles from './stories.module.scss';
 
 // Date manipulation utils
 import addDays from 'date-fns/add_days';

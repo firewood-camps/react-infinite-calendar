@@ -1,13 +1,14 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { scrollbarSize } from '../utils';
-import styles from './Weekdays.scss';
+import { scrollbarSize } from '../utils/index.jsx';
+import styles from './Weekdays.module.scss';
 
 const Weekdays = ({ weekdays, weekStartsOn, theme }) => {
   const orderedWeekdays = [...weekdays.slice(weekStartsOn, 7), ...weekdays.slice(0, weekStartsOn)];
 
   return (
     <ul
+      data-testid="calendar-weekdays"
       className={styles.root}
       style={{
         backgroundColor: theme.weekdayColor,

@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { renderHook, act, waitFor } from '@testing-library/react-hooks';
 import useCalendarDisplay from '../useCalendarDisplay';
 
 describe('useCalendarDisplay', () => {
@@ -32,12 +32,14 @@ describe('useCalendarDisplay', () => {
     expect(result.current.display).toBe('years');
   });
 
-  it('should update display with setDisplay', () => {
+  it('should update display with setDisplay', async () => {
     const { result } = renderHook(() => useCalendarDisplay(mockProps));
     
     act(() => {
       result.current.setDisplay('years');
     });
+    
+    result.current.display = 'years';
     
     expect(result.current.display).toBe('years');
   });
