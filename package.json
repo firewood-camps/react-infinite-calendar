@@ -12,43 +12,33 @@
     "styles.css"
   ],
   "scripts": {
-    "build": "npm run clean && nwb build-react-component --no-vendor",
-    "clean": "nwb clean-module && nwb clean-demo",
-    "start": "nwb serve-react-demo",
-    "storybook": "start-storybook -p 9001 -c .storybook",
-    "test": "nwb test-react",
-    "test:coverage": "nwb test-react --coverage",
-    "test:watch": "nwb test-react --server",
     "lint": "eslint --fix src/**/*.js"
   },
   "dependencies": {
+    "@storybook/react": "^8.6.12",
     "classnames": "^2.5.1",
     "date-fns": "^4.1.0",
     "dom-helpers": "^5.2.1",
     "prop-types": "^15.8.1",
     "react-tiny-virtual-list": "^2.2.0",
     "react-transition-group": "^4.4.5",
-    "recompose": "^0.22.0"
+    "recompose": "^0.30.0",
+    "sass": "^1.86.3"
   },
   "peerDependencies": {
     "react": "^16.0.0 || ^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "@kadira/storybook": "^2.35.3",
-    "@kadira/storybook-addon-options": "^1.0.1",
-    "babel-eslint": "^7.0.0",
+    "babel-eslint": "^10.1.0",
     "babel-plugin-css-modules-transform": "^1.6.2",
-    "eslint": "^3.8.1",
-    "eslint-config-react-app": "^0.5.1",
-    "eslint-plugin-flowtype": "^2.21.0",
-    "eslint-plugin-import": "^2.0.1",
-    "eslint-plugin-jsx-a11y": "^2.2.3",
-    "eslint-plugin-react": "^6.4.1",
-    "node-sass": "^4.5.0",
-    "nwb": "^0.15.6",
-    "nwb-sass": "^0.7.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "eslint": "^9.25.1",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-flowtype": "^8.0.3",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
   },
   "author": {
     "name": "Clauderic Demers",
