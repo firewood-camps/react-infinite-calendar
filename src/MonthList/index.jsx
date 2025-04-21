@@ -8,15 +8,16 @@ import {
   getWeek,
   getWeeksInMonth,
   animate,
-} from '../utils';
+} from '../utils/index.jsx';
 import parse from 'date-fns/parse';
 import startOfMonth from 'date-fns/startOfMonth';
-import Month from '../Month';
-import styles from './MonthList.scss';
+import Month from '../Month/index.jsx';
+import styles from './MonthList.module.scss';
 
 const AVERAGE_ROWS_PER_MONTH = 5;
 
 const MonthList = ({
+  DayComponent,
   disabledDates,
   disabledDays,
   height,
@@ -29,6 +30,7 @@ const MonthList = ({
   onDaySelect,
   onScroll,
   overscanMonthCount,
+  passThrough = {},
   rowHeight,
   scrollDate,
   selectedDate,
@@ -37,7 +39,14 @@ const MonthList = ({
   today,
   width,
 }) => {
-  const [scrollTop, setScrollTop] = useState(getDateOffset(scrollDate));
+  const getDateOffset = useCallback((date) => {
+    if (!date || !min || !locale) return 0;
+    const { weekStartsOn } = locale;
+    const weeks = getWeek(startOfMonth(min), parse(date), weekStartsOn);
+    return weeks * rowHeight - (height - rowHeight / 2) / 2;
+  }, [min, rowHeight, locale, height]);
+  
+  const [scrollTop, setScrollTop] = useState(() => getDateOffset(scrollDate));
   const cache = useRef({});
   const monthHeights = useRef([]);
   const scrollEl = useRef(null);
@@ -59,13 +68,7 @@ const MonthList = ({
 
   useEffect(() => {
     setScrollTop(getDateOffset(scrollDate));
-  }, [scrollDate]);
-
-  const getDateOffset = useCallback((date) => {
-    const { weekStartsOn } = locale;
-    const weeks = getWeek(startOfMonth(min), parse(date), weekStartsOn);
-    return weeks * rowHeight - (height - rowHeight / 2) / 2;
-  }, [min, rowHeight, locale, height]);
+  }, [scrollDate, getDateOffset]);
 
   const scrollToDate = useCallback((date, offset = 0, ...rest) => {
     const offsetTop = getDateOffset(date);
@@ -73,10 +76,14 @@ const MonthList = ({
   }, [getDateOffset]);
 
   const scrollTo = useCallback((scrollTop = 0, shouldAnimate = false, onScrollEnd = emptyFn) => {
-    const onComplete = () => setTimeout(() => {
-      scrollEl.current.style.overflowY = 'auto';
-      onScrollEnd();
-    });
+    const onComplete = () => {
+      if (typeof globalThis !== 'undefined') {
+        globalThis.setTimeout(() => {
+          scrollEl.current.style.overflowY = 'auto';
+          onScrollEnd();
+        }, 0);
+      }
+    };
 
     scrollEl.current.style.overflowY = 'hidden';
 
@@ -88,10 +95,15 @@ const MonthList = ({
         onComplete,
       });
     } else {
-      window.requestAnimationFrame(() => {
+      if (typeof globalThis !== 'undefined' && globalThis.requestAnimationFrame) {
+        globalThis.requestAnimationFrame(() => {
+          scrollEl.current.scrollTop = scrollTop;
+          onComplete();
+        });
+      } else {
         scrollEl.current.scrollTop = scrollTop;
         onComplete();
-      });
+      }
     }
   }, []);
 
@@ -137,6 +149,7 @@ const MonthList = ({
 
   return (
     <VirtualList
+      data-testid="calendar-month-list"
       ref={virtualListRef}
       width={width}
       height={height}

@@ -1,7 +1,5 @@
 import getScrollbarSize from 'dom-helpers/scrollbarSize';
 import { getDaysInMonth, getDay, isAfter, isBefore, isSameDay, endOfDay, startOfDay, parse, format } from 'date-fns';
-import { withPropsOnChange } from 'recompose';
-
 export const keyCodes = {
   command: 91,
   control: 17,
@@ -154,7 +152,9 @@ export function getMonthsForYear(year, day = 1) {
   return Array.from({ length: 12 }, (v, index) => new Date(year, index, day));
 }
 
-export const withImmutableProps = (props) => withPropsOnChange(() => false, props);
+export const withImmutableProps = (props) => (Component) => {
+  return (componentProps) => <Component {...props} {...componentProps} />;
+};
 
 export function debounce(callback, wait) {
   let timeout = null;

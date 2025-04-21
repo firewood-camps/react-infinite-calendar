@@ -1,9 +1,9 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { emptyFn } from '../utils';
-import defaultSelectionRenderer from './defaultSelectionRenderer';
+import { emptyFn } from '../utils/index.jsx';
+import defaultSelectionRenderer from './defaultSelectionRenderer.jsx';
 import classNames from 'classnames';
-import styles from './Header.scss';
+import styles from './Header.module.scss';
 
 const Header = ({
   dateFormat,
@@ -18,6 +18,7 @@ const Header = ({
 }) => {
   return (
     <div
+      data-testid="calendar-header"
       className={classNames(styles.root, {
         [styles.landscape]: layout === 'landscape',
       })}

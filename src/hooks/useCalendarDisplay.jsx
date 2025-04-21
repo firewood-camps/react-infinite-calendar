@@ -19,7 +19,7 @@ const useCalendarDisplay = ({ display: initialDisplay, displayOptions, locale, t
   
   const setDisplayMode = useCallback((mode) => {
     setDisplay(mode);
-    if (typeof globalThis !== 'undefined' && globalThis.__VITEST__) {
+    if (typeof window !== 'undefined' && window.__VITEST__) {
       return mode; // Return the mode for test assertions
     }
   }, []);

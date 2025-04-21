@@ -11,8 +11,13 @@
     "umd",
     "styles.css"
   ],
+  "type": "module",
   "scripts": {
-    "lint": "eslint --fix src/**/*.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest",
+    "lint": "eslint --fix src/**/*.{js,jsx}"
   },
   "dependencies": {
     "@storybook/react": "^8.6.12",
@@ -29,16 +34,25 @@
     "react": "^16.0.0 || ^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "babel-eslint": "^10.1.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/react-hooks": "^8.0.1",
+    "@vitejs/plugin-react-swc": "^3.9.0",
     "babel-plugin-css-modules-transform": "^1.6.2",
-    "eslint": "^9.25.1",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-flowtype": "^8.0.3",
+    "eslint": "^9",
+    "eslint-config-react-app": "^0.5.1",
+    "eslint-plugin-flowtype": "^2.21.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-react": "^7.37.5",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "eslint-plugin-react-hooks": "^6.0.0",
+    "jsdom": "^26.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sass": "^1.86.3",
+    "vite": "^6.3.2",
+    "vitest": "^3.1.2"
   },
   "author": {
     "name": "Firewood Camps",

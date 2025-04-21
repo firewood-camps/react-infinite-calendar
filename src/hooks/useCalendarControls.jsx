@@ -52,7 +52,8 @@ const useCalendarControls = ({ min, max, minDate, maxDate, monthListRef }) => {
       try {
         const parsedDate = date instanceof Date ? date : new Date(date);
         return format(parsedDate, 'yyyy-MM-dd');
-      } catch (err) {
+      } catch (error) {
+        console.warn('Invalid date format in disabledDates:', date);
         return null;
       }
     }).filter(Boolean);

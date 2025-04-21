@@ -1,8 +1,8 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, Children } from 'react';
 import { CSSTransition, TransitionGroup } from 'react-transition-group';
 import classNames from 'classnames';
-import styles from './Slider.scss';
-import transition from './transition.scss';
+import styles from './Slider.module.scss';
+import transition from './transition.module.scss';
 
 const DIRECTIONS = {
   LEFT: 0,
@@ -46,7 +46,7 @@ const Slider = ({ children, index, onChange }) => {
       {index !== 0 && <Arrow onClick={handleClick} direction={DIRECTIONS.LEFT} />}
       <div className={styles.wrapper} style={{ transform: `translate3d(-${100 * index}%, 0, 0)` }}>
         <TransitionGroup component={null}>
-          {Children.map(children, (child, i) => (
+          {React.Children.map(children, (child, i) => (
             <CSSTransition
               key={i}
               classNames={transition}
