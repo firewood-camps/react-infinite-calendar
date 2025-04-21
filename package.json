@@ -20,20 +20,20 @@
     "lint": "eslint --fix src/**/*.{js,jsx}"
   },
   "dependencies": {
+    "@storybook/react": "^8.6.12",
     "classnames": "^2.5.1",
     "date-fns": "^4.1.0",
     "dom-helpers": "^5.2.1",
     "prop-types": "^15.8.1",
     "react-tiny-virtual-list": "^2.2.0",
     "react-transition-group": "^4.4.5",
-    "recompose": "^0.22.0"
+    "recompose": "^0.30.0",
+    "sass": "^1.86.3"
   },
   "peerDependencies": {
     "react": "^16.0.0 || ^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "@kadira/storybook": "^2.35.3",
-    "@kadira/storybook-addon-options": "^1.0.1",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.3.0",
@@ -48,7 +48,6 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^6.0.0",
     "jsdom": "^26.1.0",
-    "nwb-sass": "^0.7.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sass": "^1.86.3",
@@ -56,18 +55,18 @@
     "vitest": "^3.1.2"
   },
   "author": {
-    "name": "Clauderic Demers",
-    "email": "me@ced.io"
+    "name": "Firewood Camps",
+    "email": "info@firewoodcamps.com"
   },
-  "user": "clauderic",
-  "homepage": "https://github.com/clauderic/react-infinite-calendar",
+  "user": "buck3000",
+  "homepage": "https://github.com/firewood-camps/react-infinite-calendar",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/clauderic/react-infinite-calendar.git"
+    "url": "https://github.com/firewood-camps/react-infinite-calendar.git"
   },
   "bugs": {
-    "url": "https://github.com/clauderic/react-infinite-calendar/issues"
+    "url": "https://github.com/firewood-camps/react-infinite-calendar/issues"
   },
   "keywords": [
     "react",
