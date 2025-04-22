@@ -1,15 +1,12 @@
 {
   "name": "buck3000-react-infinite-calendar-fork",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "description": "Infinite scrolling date-picker built with React, with localization, themes, keyboard support, and more.",
-  "main": "lib/index.js",
-  "module": "es/index.js",
+  "main": "dist/react-infinite-calendar.cjs.js",
+  "module": "dist/react-infinite-calendar.es.js",
+  "style": "dist/buck3000-react-infinite-calendar-fork.css",
   "files": [
-    "css",
-    "es",
-    "lib",
-    "umd",
-    "styles.css"
+    "dist"
   ],
   "type": "module",
   "scripts": {
