@@ -53,18 +53,18 @@
     "vitest": "^3.1.2"
   },
   "author": {
-    "name": "Firewood Camps",
-    "email": "info@firewoodcamps.com"
+    "name": "buck3000",
+    "email": "buck@firewoodcamps.com"
   },
   "user": "buck3000",
-  "homepage": "https://github.com/firewood-camps/react-infinite-calendar",
+  "homepage": "https://github.com/buck3000/react-infinite-calendar",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/firewood-camps/react-infinite-calendar.git"
+    "url": "https://github.com/buck3000/react-infinite-calendar.git"
   },
   "bugs": {
-    "url": "https://github.com/firewood-camps/react-infinite-calendar/issues"
+    "url": "https://github.com/buck3000/react-infinite-calendar/issues"
   },
   "keywords": [
     "react",
