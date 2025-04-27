@@ -3,7 +3,7 @@ import { withDefaultProps } from './';
 import { sanitizeDate, withImmutableProps } from '../utils';
 import enhanceHeader from '../Header/withMultipleDates';
 import format from 'date-fns/format';
-import parse from 'date-fns/parse';
+import parseISO from 'date-fns/parseISO';
 
 // Enhance Day component to display selected state based on an array of selected dates
 const enhanceDay = (DayComponent) => (props) => {
@@ -13,7 +13,7 @@ const enhanceDay = (DayComponent) => (props) => {
 
 // Enhance year component
 const enhanceYears = (YearsComponent) => (props) => {
-  const selected = props.displayDate ? parse(props.displayDate) : null;
+  const selected = props.displayDate ? new Date(props.displayDate) : null;
   return <YearsComponent {...props} selected={selected} />;
 };
 
@@ -33,7 +33,7 @@ export const withMultipleDates = (Component) => {
     }, [props.onSelect]);
 
     const handleYearSelect = useCallback((year, e, callback) => {
-      callback(parse(year));
+      callback(new Date(year));
     }, []);
 
     const selected = useMemo(() => props.selected

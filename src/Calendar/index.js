@@ -12,7 +12,7 @@ import MonthList from '../MonthList';
 import Weekdays from '../Weekdays';
 import Years from '../Years';
 import Day from '../Day';
-import parse from 'date-fns/parse';
+import parseISO from 'date-fns/parseISO';
 import format from 'date-fns/format';
 import startOfDay from 'date-fns/startOfDay';
 
@@ -140,10 +140,10 @@ class Calendar extends Component {
   }
 
   updateYears(props = this.props) {
-    this._min = parse(props.min);
-    this._max = parse(props.max);
-    this._minDate = parse(props.minDate);
-    this._maxDate = parse(props.maxDate);
+    this._min = new Date(props.min);
+    this._max = new Date(props.max);
+    this._minDate = new Date(props.minDate);
+    this._maxDate = new Date(props.maxDate);
 
     const min = this._min.getFullYear();
     const minMonth = this._min.getMonth();
@@ -164,7 +164,7 @@ class Calendar extends Component {
   }
 
   getDisabledDates(disabledDates) {
-    return disabledDates && disabledDates.map(date => format(parse(date), 'yyyy-MM-dd'));
+    return disabledDates && disabledDates.map(date => format(new Date(date), 'yyyy-MM-dd'));
   }
 
   getDisplayOptions(displayOptions = this.props.displayOptions) {

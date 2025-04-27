@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { withDefaultProps } from './';
 import { sanitizeDate, withImmutableProps } from '../utils';
 import format from 'date-fns/format';
-import parse from 'date-fns/parse';
+import parseISO from 'date-fns/parseISO';
 
 const enhanceDay = (DayComponent) => (props) => {
   const isSelected = props.selected === props.date;
@@ -10,7 +10,7 @@ const enhanceDay = (DayComponent) => (props) => {
 };
 
 const enhanceYear = (YearsComponent) => (props) => {
-  const selected = parse(props.selected);
+  const selected = new Date(props.selected);
   return <YearsComponent {...props} selected={selected} />;
 };
 
@@ -32,7 +32,7 @@ export const withDateSelection = (Component) => {
     const selected = useMemo(() => sanitizeDate(selectedProp, props), [selectedProp, props]);
 
     const handleYearSelect = useCallback((date) => {
-      const newDate = parse(date);
+      const newDate = new Date(date);
       onSelect(newDate);
       setScrollDate(newDate);
     }, [onSelect]);

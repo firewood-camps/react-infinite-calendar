@@ -9,7 +9,7 @@ import {
   getWeeksInMonth,
   animate,
 } from '../utils';
-import parse from 'date-fns/parse';
+import parseISO from 'date-fns/parseISO';
 import startOfMonth from 'date-fns/startOfMonth';
 import Month from '../Month';
 import styles from './MonthList.scss';
@@ -63,7 +63,7 @@ const MonthList = ({
 
   const getDateOffset = useCallback((date) => {
     const { weekStartsOn } = locale;
-    const weeks = getWeek(startOfMonth(min), parse(date), weekStartsOn);
+    const weeks = getWeek(startOfMonth(min), new Date(date), weekStartsOn);
     return weeks * rowHeight - (height - rowHeight / 2) / 2;
   }, [min, rowHeight, locale, height]);
 

@@ -5,7 +5,7 @@ import { withImmutableProps } from '../utils';
 import isBefore from 'date-fns/isBefore';
 import enhanceHeader from '../Header/withRange';
 import format from 'date-fns/format';
-import parse from 'date-fns/parse';
+import parseISO from 'date-fns/parseISO';
 import styles from '../Day/Day.scss';
 
 let isTouchDevice = false;
@@ -68,7 +68,7 @@ export const withRange = (Component) => {
 
     const handleMouseOver = useCallback((e) => {
       const dateStr = e.target.getAttribute('data-date');
-      const date = dateStr && parse(dateStr);
+      const date = dateStr && new Date(dateStr);
 
       if (!date) { return; }
 
@@ -84,7 +84,7 @@ export const withRange = (Component) => {
     const handleYearSelect = useCallback((date) => {
       setScrollDate(date);
       onSelect(getSortedSelection(
-        Object.assign({}, selectedProp, { [displayKey]: parse(date) }))
+        Object.assign({}, selectedProp, { [displayKey]: new Date(date) }))
       );
     }, [displayKey, onSelect, selectedProp]);
 

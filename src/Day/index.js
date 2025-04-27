@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
 import classNames from 'classnames';
-import parse from 'date-fns/parse';
+import parseISO from 'date-fns/parseISO';
 import styles from './Day.scss';
 
 const Day = ({
@@ -22,7 +22,7 @@ const Day = ({
 }) => {
   const handleClick = useCallback(() => {
     if (!isDisabled && typeof onClick === 'function') {
-      onClick(parse(date));
+      onClick(new Date(date));
     }
   }, [isDisabled, onClick, date]);
 
