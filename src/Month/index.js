@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import classNames from 'classnames';
 import { getDateString } from '../utils';
-import format from 'date-fns/format';
-import getDay from 'date-fns/getDay';
-import isSameYear from 'date-fns/isSameYear';
+import { format, getDay } from '../utils/dayjs';
+import dayjs from '../utils/dayjs';
 import styles from './Month.scss';
 
 const Month = ({
@@ -87,7 +86,7 @@ const Month = ({
     return monthRows;
   }, [DayComponent, disabledDates, disabledDays, monthDate, locale, maxDate, minDate, rowHeight, rows, selected, today, theme, passThrough]);
 
-  const dateFormat = isSameYear(monthDate, today) ? 'MMMM' : 'MMMM yyyy';
+  const dateFormat = dayjs(monthDate).isSame(dayjs(today), 'year') ? 'MMMM' : 'MMMM yyyy';
 
   return (
     <div className={styles.root} style={{ ...style, lineHeight: `${rowHeight}px` }}>

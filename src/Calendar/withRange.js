@@ -2,10 +2,9 @@ import React, { useState, useCallback, useMemo } from 'react';
 import classNames from 'classnames';
 import { withDefaultProps } from './';
 import { withImmutableProps } from '../utils';
-import isBefore from 'date-fns/isBefore';
+import { isBefore } from '../utils/dayjs';
 import enhanceHeader from '../Header/withRange';
-import format from 'date-fns/format';
-import parse from 'date-fns/parse';
+import { format, parse } from '../utils/dayjs';
 import styles from '../Day/Day.scss';
 
 let isTouchDevice = false;

@@ -2,8 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { withDefaultProps } from './';
 import { sanitizeDate, withImmutableProps } from '../utils';
 import enhanceHeader from '../Header/withMultipleDates';
-import format from 'date-fns/format';
-import parse from 'date-fns/parse';
+import { format, parse } from '../utils/dayjs';
 
 // Enhance Day component to display selected state based on an array of selected dates
 const enhanceDay = (DayComponent) => (props) => {

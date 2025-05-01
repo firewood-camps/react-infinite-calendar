@@ -1,5 +1,5 @@
 import getScrollbarSize from 'dom-helpers/scrollbarSize';
-import { getDaysInMonth, getDay, isAfter, isBefore, isSameDay, endOfDay, startOfDay, parse, format } from 'date-fns';
+import { getDaysInMonth, getDay, isAfter, isBefore, isSameDay, endOfDay, startOfDay, parse, format } from './dayjs';
 import { withPropsOnChange } from 'recompose';
 
 export const keyCodes = {

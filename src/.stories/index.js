@@ -12,12 +12,29 @@ import InfiniteCalendar, {
 import styles from './stories.scss';
 
 // Date manipulation utils
-import addDays from 'date-fns/add_days';
-import addMonths from 'date-fns/add_months';
-import endOfMonth from 'date-fns/end_of_month';
-import format from 'date-fns/format';
-import isBefore from 'date-fns/is_before';
-import subMonths from 'date-fns/sub_months';
+import dayjs from 'dayjs';
+import 'dayjs/locale/fr';
+
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import weekOfYear from 'dayjs/plugin/weekOfYear';
+import isBetween from 'dayjs/plugin/isBetween';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+import advancedFormat from 'dayjs/plugin/advancedFormat';
+
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(weekOfYear);
+dayjs.extend(isBetween);
+dayjs.extend(customParseFormat);
+dayjs.extend(advancedFormat);
+
+const addDays = (date, days) => dayjs(date).add(days, 'day').toDate();
+const addMonths = (date, months) => dayjs(date).add(months, 'month').toDate();
+const endOfMonth = (date) => dayjs(date).endOf('month').toDate();
+const format = (date, formatStr) => dayjs(date).format(formatStr);
+const isBefore = (date1, date2) => dayjs(date1).isBefore(dayjs(date2));
+const subMonths = (date, months) => dayjs(date).subtract(months, 'month').toDate();
 
 const CenterDecorator = story => <div className={styles.center}>{story()}</div>;
 addDecorator(CenterDecorator);

@@ -2,12 +2,12 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import InfiniteCalendar from 'react-infinite-calendar';
 import 'react-infinite-calendar/styles.css';
-import { fr } from 'date-fns/locale';
+import 'dayjs/locale/fr';
 
 const locale = {
   blank: 'Aucune date sélectionnée',
   headerFormat: 'dddd, D MMM',
-  locale: fr, // Pass in the date-fns locale for the language you want (in this case, French)
+  locale: 'fr', // Pass in the locale code for the language you want (in this case, French)
   todayLabel: {
     long: "Aujourd'hui",
     short: 'Auj.',
