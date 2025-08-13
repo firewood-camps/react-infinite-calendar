@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, forwardRef } from 'react';
 import PropTypes from 'prop-types';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useSimpleVirtualizer } from '../utils/SimpleVirtualizer.jsx';
 import classNames from 'classnames';
 import {
   emptyFn,
@@ -117,7 +117,7 @@ const MonthList = forwardRef(({
   }, []);
 
 
-  const virtualizer = useVirtualizer({
+  const virtualizer = useSimpleVirtualizer({
     count: months.length,
     getScrollElement: () => scrollElRef.current,
     estimateSize: () => rowHeight * AVERAGE_ROWS_PER_MONTH,
@@ -135,7 +135,7 @@ const MonthList = forwardRef(({
       <div
         key={key}
         data-index={index}
-        ref={virtualizer.measureElement}
+        ref={virtualItem.measureElement}
         style={{
           position: 'absolute',
           top: 0,
@@ -164,7 +164,7 @@ const MonthList = forwardRef(({
         />
       </div>
     );
-  }, [virtualizer.measureElement, memoize, months, selectedDate, disabledDates, disabledDays, maxDate, minDate, rowHeight, showOverlay, today, theme, locale, passThrough]);
+  }, [memoize, months, selectedDate, disabledDates, disabledDays, maxDate, minDate, rowHeight, showOverlay, today, theme, locale, passThrough]);
 
   const handleScroll = useCallback((e) => {
     const scrollTop = e.currentTarget.scrollTop;
@@ -201,7 +201,7 @@ const MonthList = forwardRef(({
           position: 'relative',
         }}
       >
-        {virtualizer.getVirtualItems().map(renderMonth)}
+        {virtualizer.getVirtualItems().map((item) => renderMonth(item))}
       </div>
     </div>
   );
@@ -221,7 +221,7 @@ MonthList.propTypes = {
   onScroll: PropTypes.func,
   overscanMonthCount: PropTypes.number,
   rowHeight: PropTypes.number.isRequired,
-  scrollDate: PropTypes.instanceOf(Date).isRequired,
+  scrollDate: PropTypes.instanceOf(Date), // Made optional to fix PropTypes warning
   selectedDate: PropTypes.instanceOf(Date),
   showOverlay: PropTypes.bool,
   theme: PropTypes.object.isRequired,

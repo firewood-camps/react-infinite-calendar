@@ -37,14 +37,26 @@ export default defineConfig({
     },
     rollupOptions: {
       external: ['react', 'react-dom', 'prop-types'],
-      output: {
-        exports: 'named',
-        globals: { 
-          react: 'React', 
-          'react-dom': 'ReactDOM',
-          'prop-types': 'PropTypes'
+      output: [
+        {
+          format: 'es',
+          exports: 'named',
+          globals: {
+            react: 'React',
+            'react-dom': 'ReactDOM',
+            'prop-types': 'PropTypes'
+          }
+        },
+        {
+          format: 'cjs',
+          exports: 'named',
+          globals: {
+            react: 'React',
+            'react-dom': 'ReactDOM',
+            'prop-types': 'PropTypes'
+          }
         }
-      },
+      ],
     },
     target: 'es2020',
     sourcemap: true,
